@@ -3,7 +3,7 @@ from pyglet.window import key
 import math
 import numpy as np
 from PIL import Image
-import random
+from Generations import Generation
 
 ## Useful function
 def rotateByTheta(vx, vy, theta):
@@ -143,33 +143,8 @@ def update(dt):
     for obj in cars:
         obj.update(dt)
 
-# DEFAULT PARAMETERS
-defaultStartX = 150
-defaultStartY = 415
-defaultSpeed = 100
-defaultTurnRadius = 100
-defaultEyes = 3 # maybe even make this an input
-defaultEyeDistance = 20 #number of pixels 
 
-# INPUTS
-# leftEye = 0 or 1 (inbounds or not inbounds)
-# frontEye = 0 or 1 (inbounds or not inbounds)
-# rightEye = 0 or 1 (inbounds or not inbounds)
-
-# find ideal connections between eyes and output values
-
-# OUTPUTS
-# forward = 0 or 1
-# backward = 0 or 1
-# left = 0 or 1
-# right = 0 or 1
-
-cars = [] # add more car objects to run simultaneously
-for i in range(5):
-    randSpeed = random.randint(-10, 10)
-    randTurn = random.randint(-10, 10)
-    car = Car(defaultSpeed + randSpeed, defaultTurnRadius + randTurn, x=150, y=415, batch=None)
-    cars.append(car)
+cars = Generation(Car, 5).cars # Creates a generation of 5 cars
 for obj in cars:
     window.push_handlers(obj)
 
