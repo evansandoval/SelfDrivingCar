@@ -5,6 +5,7 @@ import math
 import numpy as np
 from PIL import Image
 from Generations import Generation
+import Brain
 
 ## Useful function
 def rotateByTheta(vx, vy, theta):
@@ -59,7 +60,7 @@ class Car(PhysicalObject):
             self.rotation = car.rotation + angle
             self.x = car.x
             self.y = car.y
-            self.line = shapes.Line(self.x, self.y, self.targetXY()[0], self.targetXY()[1], width=5, batch=eyeBatch)
+            self.line = shapes.Line(self.x, self.y, self.targetXY()[0], self.targetXY()[1], width=2, batch=eyeBatch)
         def read(self):
             x, y = self.targetXY()
             if 0 < x < 1080 and 0 < y < 920 and boundsMatrix[x][y]:
@@ -210,7 +211,7 @@ def update(dt):
     for obj in cars:
         obj.update(dt)
 
-gen = Generation(Car, 1, showEyes=False)
+gen = Generation.firstGeneration(Car, 1, showEyes=True)
 cars = gen.cars # Creates a generation of 5 cars
 for obj in cars:
     window.push_handlers(obj)
