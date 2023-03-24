@@ -1,11 +1,8 @@
-import pyglet
+import pyglet, math, WeightedQuickUnion, Brain, numpy as np
 from pyglet import shapes
 from pyglet.window import key
-import math
-import numpy as np
 from PIL import Image
 from Generations import Generation
-import Brain
 
 ## Useful function
 def rotateByTheta(vx, vy, theta):
@@ -23,6 +20,56 @@ for x in range(1080):
         if(pixels[x,y] == 0):
             boundsMatrix[x][919-y] = 1 ## 1 for when it's in bounds
                                        ## 0 for when it's out of bounds
+
+
+## GATE IMAGE PROCESSING
+gateIm = Image.open("./images/track1gates.png")
+pixels = gateIm.load()
+gatesMatrix = np.zeros((1080,920))
+for x in range(1080):
+    for y in range(920):      
+        if pixels[x,y] == 1:
+            gatesMatrix[x][919-y] = 1 # 1 for when it represents a Gate
+                                      # 0 otherwise
+
+class Gates:
+    def __init__(self):
+        self.wqu = WeightedQuickUnion.WeightedQuickUnionWithPathCompressionUF(1080*920)
+        print(self.wqu.count)
+        for x in range(1080):
+            for y in range(920):
+                if self.isGate(x,y):
+                   self.addAdjacent(x, y)
+    
+    def addAdjacent(self, x, y):
+        if x < 0 or y<0 or x>=1080 or y>=920:
+            return
+        # check spot above
+        if (x > 0 and self.isGate(x, y+1)):
+            self.wqu.union(y * 1080 + x, (y + 1) * 1080 + x)
+            
+        # check spot left
+        if (y > 0 and self.isGate(x-1, y)):
+            self.wqu.union(y * 1080 + x, (y) * 1080 + x-1)
+            
+        # check spot below
+        if (x < 1080 and self.isGate(x, y-1)):
+            self.wqu.union(y * 1080 + x, (y-1) * 1080 + x)
+        
+        # check spot right
+        if (y < 920 and self.isGate(x+1, y)):
+            self.wqu.union(y * 1080 + x, (y) * 1080 + x + 1)
+
+    def isGate(self, x,y):
+        return x < 1080 and y < 920 and gatesMatrix[x][y]
+    
+    def count(self):
+        return self.wqu.count
+    
+    def sameGateAs(self, x1, y1, x2, y2):
+        point1 = x1 + y1*1080
+        point2 = x2 + y2*1080
+        return self.wqu.connected(point1, point2)
 
 ## PYGLET WINDOW SETUP
 windowX, windowY = 1080, 920 # track images should be 1080x920
@@ -104,7 +151,7 @@ class Car(PhysicalObject):
             # self.control['down'] = True
     
     def on_mouse_press(self, x, y, button, modifiers):
-        print("mouse", x, y, boundsMatrix[x][y])
+        print("mouse", x, y, gatesMatrix[x][y])
 
     def on_key_release(self, symbol, modifiers):
         if symbol == key.UP:
@@ -211,7 +258,7 @@ def update(dt):
     for obj in cars:
         obj.update(dt)
 
-gen = Generation.firstGeneration(Car, 1, showEyes=True)
+gen = Generation.firstGeneration(Car, 1, showEye=True)
 cars = gen.cars # Creates a generation of 5 cars
 for obj in cars:
     window.push_handlers(obj)

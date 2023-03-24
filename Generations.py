@@ -37,7 +37,7 @@ class Generation:
             eyeAngles = params[3]
             self.cars.append(CarConstructor(speed, turnRadius, eyeDist, eyeAngles, x=defaultStartX, y=defaultStartY, batch=None))
 
-    def firstGeneration(self, CarConstructor, numCars, showEye=True):
+    def firstGeneration(CarConstructor, numCars, showEye=True):
         return Generation(CarConstructor, numCars, showEyes=showEye)
 
     def sortByFitness(self):
