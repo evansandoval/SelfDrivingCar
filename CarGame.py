@@ -1,4 +1,5 @@
 import pyglet
+from pyglet import shapes
 from pyglet.window import key
 import math
 import numpy as np
@@ -48,7 +49,7 @@ class PhysicalObject(pyglet.sprite.Sprite):
         self.x += self.velocity_x * dt
         self.y += self.velocity_y * dt
 
-    
+eyeBatch = pyglet.graphics.Batch()  
 class Car(PhysicalObject):
     class Eye(PhysicalObject):
         def __init__(self, length, angle, car, *args, **kwargs):
@@ -58,12 +59,21 @@ class Car(PhysicalObject):
             self.rotation = car.rotation + angle
             self.x = car.x
             self.y = car.y
+            self.line = shapes.Line(self.x, self.y, self.targetXY()[0], self.targetXY()[1], width=5, batch=eyeBatch)
         def read(self):
-            angle_radians = math.radians(self.rotation + 90)
-            x = round(self.x + self.length * math.sin(angle_radians))
-            y = round(self.y + self.length * math.cos(angle_radians))
+            x, y = self.targetXY()
             if 0 < x < 1080 and 0 < y < 920 and boundsMatrix[x][y]:
                 print(self.angle)
+
+        def updateLine(self):
+            self.line.x = self.x
+            self.line.y = self.y
+            self.line.x2 = self.targetXY()[0]
+            self.line.y2 = self.targetXY()[1]
+
+        def targetXY(self):
+            angle_radians = math.radians(self.rotation + 90)
+            return round(self.x + self.length * math.sin(angle_radians)), round(self.y + self.length * math.cos(angle_radians))
         
 
     def __init__(self, setSpeed, setRotateSpeed, eyeDist, eyeAngles, *args, **kwargs):
@@ -129,14 +139,18 @@ class Car(PhysicalObject):
         for eye in self.eyes:
             eye.x = self.x
             eye.y = self.y
+            eye.updateLine()
+
 
     def rotateEyes(self, theta, kill=False):
         if kill:
             for eye in self.eyes:
                 eye.rotation = self.rotation + eye.angle
+                eye.updateLine()
         else: 
             for eye in self.eyes:
                 eye.rotation += theta
+                eye.updateLine()
 
     def turnLeft(self, dt):
         theta0 = -math.radians(self.rotation)
@@ -196,8 +210,8 @@ def update(dt):
     for obj in cars:
         obj.update(dt)
 
-
-cars = Generation(Car, 1).cars # Creates a generation of 5 cars
+gen = Generation(Car, 1, showEyes=False)
+cars = gen.cars # Creates a generation of 5 cars
 for obj in cars:
     window.push_handlers(obj)
 
@@ -208,8 +222,8 @@ def on_draw():
     trackImage.draw()
     for obj in cars:
         obj.draw()
-        for eye in obj.eyes:
-            eye.draw()
+    if gen.showEyes:
+        eyeBatch.draw()
 
 if __name__ == '__main__':
     pyglet.clock.schedule_interval(update, 1/120.0)

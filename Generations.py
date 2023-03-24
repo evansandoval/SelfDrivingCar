@@ -7,7 +7,7 @@ defaultStartY = 415
 defaultSpeed = 100
 defaultTurnRadius = 100
 # defaultEyes = 3 # maybe even make this an input
-defaultEyeDistance = 70 #number of pixels
+defaultEyeDistance = 40 #number of pixels
 defaultEyeAngles = [-45, 0, 90] #NUMBER OF EYES WILL BE LENGTH OF THIS ARRAY
 
 defaultParams = [defaultSpeed, defaultTurnRadius, defaultEyeDistance, defaultEyeAngles]
@@ -26,8 +26,9 @@ defaultParams = [defaultSpeed, defaultTurnRadius, defaultEyeDistance, defaultEye
 # right = 0 or 1
 
 class Generation:
-    def __init__(self, CarConstructor, numCars, params=defaultParams):
+    def __init__(self, CarConstructor, numCars, params=defaultParams, showEyes=True):
         self.cars = []
+        self.showEyes = showEyes
         for _ in range(numCars):
             speed = params[0] + random.randint(-10, 10)
             turnRadius = params[1] + random.randint(-10,10)
