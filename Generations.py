@@ -6,10 +6,11 @@ defaultStartX = 150
 defaultStartY = 415
 defaultSpeed = 100
 defaultTurnRadius = 100
-defaultEyes = 3 # maybe even make this an input
-defaultEyeDistance = 20 #number of pixels 
+# defaultEyes = 3 # maybe even make this an input
+defaultEyeDistance = 70 #number of pixels
+defaultEyeAngles = [-45, 0, 90] #NUMBER OF EYES WILL BE LENGTH OF THIS ARRAY
 
-defaultParams = np.array([defaultSpeed, defaultTurnRadius, defaultEyes, defaultEyeDistance])
+defaultParams = [defaultSpeed, defaultTurnRadius, defaultEyeDistance, defaultEyeAngles]
 
 # INPUTS
 # leftEye = 0 or 1 (inbounds or not inbounds)
@@ -30,9 +31,9 @@ class Generation:
         for _ in range(numCars):
             speed = params[0] + random.randint(-10, 10)
             turnRadius = params[1] + random.randint(-10,10)
-            numEyes = params[2]
-            eyeDist = params[3]
-            self.cars.append(CarConstructor(speed, turnRadius, x=150, y=415, batch=None))
+            eyeDist = params[2]
+            eyeAngles = params[3]
+            self.cars.append(CarConstructor(speed, turnRadius, eyeDist, eyeAngles, x=150, y=415, batch=None))
 
     def sortByFitness(self):
         self.cars.sort(lambda car: car.getFitness(), reverse=True)

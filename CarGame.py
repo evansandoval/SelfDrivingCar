@@ -16,10 +16,10 @@ def rotateByTheta(vx, vy, theta):
 trackIm = Image.open('./images/track1.png') 
 pixels = trackIm.load()
 boundsMatrix = np.zeros((1080, 920))
-for i in range(1080):
-    for j in range(920):
-        if(pixels[i,j] == 0):
-            boundsMatrix[i][919-j] = 1 ## 1 for when it's in bounds
+for x in range(1080):
+    for y in range(920):
+        if(pixels[x,y] == 0):
+            boundsMatrix[x][919-y] = 1 ## 1 for when it's in bounds
                                        ## 0 for when it's out of bounds
 
 ## PYGLET WINDOW SETUP
@@ -32,6 +32,8 @@ pyglet.resource.reindex()
 
 carFile = pyglet.resource.image("car.png")
 carFile.anchor_x, carFile.anchor_y  = carFile.width // 2, carFile.height // 2 
+lineFile = pyglet.resource.image("line.png")
+lineFile.anchor_x, lineFile.anchor_y  = 0 , lineFile.height // 2
 trackFile= pyglet.resource.image("track1.png")
 trackImage = pyglet.sprite.Sprite(img=trackFile)
 
@@ -46,15 +48,38 @@ class PhysicalObject(pyglet.sprite.Sprite):
         self.x += self.velocity_x * dt
         self.y += self.velocity_y * dt
 
+    
 class Car(PhysicalObject):
-    def __init__(self, setSpeed, setRotateSpeed, *args, **kwargs):
+    class Eye(PhysicalObject):
+        def __init__(self, length, angle, car, *args, **kwargs):
+            super().__init__(img=lineFile, *args, **kwargs)
+            self.length = length
+            self.angle = angle
+            self.rotation = car.rotation + angle
+            self.x = car.x
+            self.y = car.y
+        def read(self):
+            angle_radians = math.radians(self.rotation + 90)
+            x = round(self.x + self.length * math.sin(angle_radians))
+            y = round(self.y + self.length * math.cos(angle_radians))
+            if 0 < x < 1080 and 0 < y < 920 and boundsMatrix[x][y]:
+                print(self.angle)
+        
+
+    def __init__(self, setSpeed, setRotateSpeed, eyeDist, eyeAngles, *args, **kwargs):
         self.speed = setSpeed
         self.rotate_speed = setRotateSpeed
         self.mu = .999 # FRICTION CONSTANT
         super().__init__(img=carFile, *args, **kwargs)
         self.rotation = -90
         self.startX, self.startY = self.x, self.y
+        self.makeEyes(eyeDist, eyeAngles)
         self.control = dict(left=False, right=False, up=False, down=False)
+
+    def makeEyes(self, eyeDist, eyeAngles):
+        self.eyes = []
+        for angle in eyeAngles:
+            self.eyes.append(self.Eye(eyeDist, angle, self))
     
     def on_key_press(self, symbol, modifiers):
         if symbol == key.UP:
@@ -64,7 +89,11 @@ class Car(PhysicalObject):
         elif symbol == key.RIGHT:
             self.control['right'] = True
         elif symbol == key.DOWN:
-            self.control['down'] = True
+            asldjgh = 34
+            # self.control['down'] = True
+    
+    def on_mouse_press(self, x, y, button, modifiers):
+        print("mouse", x, y, boundsMatrix[x][y])
 
     def on_key_release(self, symbol, modifiers):
         if symbol == key.UP:
@@ -90,22 +119,39 @@ class Car(PhysicalObject):
         self.rotation = -90
         self.velocity_x, self.velocity_y = 0, 0
         self.x, self.y = self.startX, self.startY
+        self.rotateEyes(0, True)
     
     def checkBounds(self):
         if not (0 < self.x < 1080) or not (0 < self.y < 920) or boundsMatrix[int(self.x)][int(self.y)]:
             self.kill()
-    
+
+    def moveEyes(self):
+        for eye in self.eyes:
+            eye.x = self.x
+            eye.y = self.y
+
+    def rotateEyes(self, theta, kill=False):
+        if kill:
+            for eye in self.eyes:
+                eye.rotation = self.rotation + eye.angle
+        else: 
+            for eye in self.eyes:
+                eye.rotation += theta
+
     def turnLeft(self, dt):
         theta0 = -math.radians(self.rotation)
         self.rotation -= self.rotate_speed * dt
+        self.rotateEyes(-self.rotate_speed * dt)
         thetaf = -math.radians(self.rotation)
         dtheta = thetaf-theta0
         newRotatedVector = rotateByTheta(self.velocity_x, self.velocity_y, dtheta)
         self.velocity_x, self.velocity_y = newRotatedVector[0], newRotatedVector[1]
 
+
     def turnRight(self, dt):  
         theta0 = -math.radians(self.rotation)
         self.rotation += self.rotate_speed * dt
+        self.rotateEyes(self.rotate_speed * dt)
         thetaf = -math.radians(self.rotation)
         dtheta = thetaf-theta0
         newRotatedVector = rotateByTheta(self.velocity_x, self.velocity_y, dtheta)
@@ -124,11 +170,18 @@ class Car(PhysicalObject):
         force_y = math.sin(angle_radians) * self.speed * dt
         self.velocity_x -= force_x
         self.velocity_y -= force_y
+        
+
+    def readEyes(self):
+        for eye in self.eyes:
+            eye.read()
 
     def update(self, dt):
         super(Car, self).update(dt)
         self.friction()
         self.checkBounds()
+        self.readEyes()
+        self.moveEyes()
         if self.control['left']:
             self.turnLeft(dt)
         if self.control['right']:
@@ -144,7 +197,7 @@ def update(dt):
         obj.update(dt)
 
 
-cars = Generation(Car, 5).cars # Creates a generation of 5 cars
+cars = Generation(Car, 1).cars # Creates a generation of 5 cars
 for obj in cars:
     window.push_handlers(obj)
 
@@ -155,6 +208,8 @@ def on_draw():
     trackImage.draw()
     for obj in cars:
         obj.draw()
+        for eye in obj.eyes:
+            eye.draw()
 
 if __name__ == '__main__':
     pyglet.clock.schedule_interval(update, 1/120.0)
