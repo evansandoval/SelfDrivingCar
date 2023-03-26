@@ -1,6 +1,6 @@
 import numpy as np
 
-# AI for a car with len(inputVector) eyes, a hidden layer of length 8, and outputs a list of length 3
+# AI for a car with len(inputVector) eyes, a hidden layer of length 8, and outputs a list of length 4
 class Brain:
 
     # LAYER 1 IS 8 X NUM_EYES, OUTPUTLAYER IS NUM_EYES X 8

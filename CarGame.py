@@ -1,4 +1,4 @@
-import pyglet, math, WeightedQuickUnion, Brain, numpy as np
+import pyglet, math, Gates, Brain, numpy as np
 from pyglet import shapes
 from pyglet.window import key
 from PIL import Image
@@ -31,46 +31,7 @@ for x in range(1080):
         if pixels[x,y] == 1:
             gatesMatrix[x][919-y] = 1 # 1 for when it represents a Gate
                                       # 0 otherwise
-
-class Gates:
-    def __init__(self):
-        self.wqu = WeightedQuickUnion.WeightedQuickUnionWithPathCompressionUF(1080*920)
-        for x in range(1080):
-            for y in range(920):
-                if self.isGate(x,y):
-                   self.addAdjacent(x, y)
-    
-    def addAdjacent(self, x, y):
-        if x < 0 or y<0 or x>=1080 or y>=920:
-            return
-        # check spot above
-        if (x > 0 and self.isGate(x, y+1)):
-            self.wqu.union(y * 1080 + x, (y + 1) * 1080 + x)
-            
-        # check spot left
-        if (y > 0 and self.isGate(x-1, y)):
-            self.wqu.union(y * 1080 + x, (y) * 1080 + x-1)
-            
-        # check spot below
-        if (x < 1080 and self.isGate(x, y-1)):
-            self.wqu.union(y * 1080 + x, (y-1) * 1080 + x)
-        
-        # check spot right
-        if (y < 920 and self.isGate(x+1, y)):
-            self.wqu.union(y * 1080 + x, (y) * 1080 + x + 1)
-
-    def isGate(self, x,y):
-        return 0 < x < 1080 and 0 < y < 920 and gatesMatrix[x][y]
-    
-    def count(self):
-        return self.wqu.count
-    
-    def sameGateAs(self, x1, y1, x2, y2):
-        point1 = x1 + y1*1080
-        point2 = x2 + y2*1080
-        return self.wqu.connected(point1, point2)
-
-gateObj = Gates()
+gateObj = Gates.GatesTracker(gatesMatrix)
 
 ## PYGLET WINDOW SETUP
 windowX, windowY = 1080, 920 # track images should be 1080x920
@@ -275,17 +236,7 @@ class Car(PhysicalObject):
             print("Car has completed the course")
             self.kill()
 
-    def update(self, dt):
-        if self.dead:
-            return
-        self.timeAlive += dt
-        super(Car, self).update(dt)
-        self.friction()
-        self.checkBounds()
-        self.readEyes()
-        self.moveEyes()
-        self.checkGates()
-        self.checkStopConditions()
+    def moveCar(self, dt):
         if self.control['left']:
             self.turnLeft(dt)
         if self.control['right']:
@@ -294,6 +245,18 @@ class Car(PhysicalObject):
             self.forward(dt)
         if self.control['down']:
             self.backward(dt)
+
+    def update(self, dt):
+        if self.dead:
+            return
+        super(Car, self).update(dt)
+        self.timeAlive += dt
+        self.friction()
+        self.checkBounds()
+        self.moveEyes()
+        self.checkGates()
+        self.checkStopConditions()
+        self.moveCar(dt)
 
 # Universal update function by pyglet
 def update(dt):
