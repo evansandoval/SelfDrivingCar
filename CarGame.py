@@ -87,7 +87,7 @@ class Car(PhysicalObject):
             angle_radians = math.radians(self.rotation + 90)
             return round(self.x + self.length * math.sin(angle_radians)), round(self.y + self.length * math.cos(angle_radians))
         
-    def __init__(self, setSpeed, setRotateSpeed, eyeDist, eyeAngles, brain, *args, **kwargs):
+    def __init__(self, setSpeed, setRotateSpeed, eyeParams, brain, *args, **kwargs):
         super().__init__(img=carFile, *args, **kwargs)
         self.speed = setSpeed
         self.rotate_speed = setRotateSpeed
@@ -96,16 +96,18 @@ class Car(PhysicalObject):
         self.mu = .999 # FRICTION CONSTANT
         self.rotation = -90
         self.startX, self.startY = self.x, self.y
-        self.makeEyes(eyeDist, eyeAngles)
+        self.makeEyes(eyeParams)
+        self.params = [setSpeed, setRotateSpeed]
+        self.eyeParams = eyeParams
         self.control = dict(left=False, right=False, up=False, down=False)
         self.gatesVisited = {}
         self.control = {'up': 0, 'left': 0, 'down': 0, 'right': 0}
         self.brain = brain
 
-    def makeEyes(self, eyeDist, eyeAngles):
+    def makeEyes(self, eyeParams):
         self.eyes = []
-        for angle in eyeAngles:
-            self.eyes.append(self.Eye(eyeDist, angle, self))
+        for eye in eyeParams:
+            self.eyes.append(self.Eye(eye[0], eye[1], self))
     
     def on_key_press(self, symbol, modifiers):
         if symbol == key.UP:
@@ -227,7 +229,7 @@ class Car(PhysicalObject):
         numGates = len(self.gatesVisited)
         averageGateTime = sum(self.gatesVisited.values()) / numGates
         return numGates**3 / averageGateTime
-        
+
     def checkStopConditions(self):
         if len(self.gatesVisited) == 0 and self.timeAlive > 7:
             # print("Car has not moved sufficient distance")
@@ -272,7 +274,7 @@ def update(dt):
     for obj in cars:
         obj.update(dt)
 
-gen = Generation.firstGeneration(Car, 100, showEye=True)
+gen = Generation(Car, 100, showEyes=True)
 cars = gen.cars # Creates a generation of 5 cars
 for obj in cars:
     window.push_handlers(obj)
@@ -288,7 +290,7 @@ def on_draw():
         eyeBatch.draw()
     
     if gen.isDead():
-        gen.endGeneration()
+        gen.nextGeneration()
 
 if __name__ == '__main__':
     pyglet.clock.schedule_interval(update, 1/120.0)
