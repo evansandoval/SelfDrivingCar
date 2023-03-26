@@ -21,7 +21,7 @@ class Brain:
         
 
         return [processedVector[0] > .5, processedVector[1] > .5, processedVector[2] > .5]
-
+    
     def sigmoid(self, vector):
         return 1 / (1 + np.exp(-vector)) 
 

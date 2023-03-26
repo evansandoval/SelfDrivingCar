@@ -35,7 +35,6 @@ for x in range(1080):
 class Gates:
     def __init__(self):
         self.wqu = WeightedQuickUnion.WeightedQuickUnionWithPathCompressionUF(1080*920)
-        print(self.wqu.count)
         for x in range(1080):
             for y in range(920):
                 if self.isGate(x,y):
@@ -61,7 +60,7 @@ class Gates:
             self.wqu.union(y * 1080 + x, (y) * 1080 + x + 1)
 
     def isGate(self, x,y):
-        return x < 1080 and y < 920 and gatesMatrix[x][y]
+        return 0 < x < 1080 and 0 < y < 920 and gatesMatrix[x][y]
     
     def count(self):
         return self.wqu.count
@@ -70,6 +69,8 @@ class Gates:
         point1 = x1 + y1*1080
         point2 = x2 + y2*1080
         return self.wqu.connected(point1, point2)
+
+gateObj = Gates()
 
 ## PYGLET WINDOW SETUP
 windowX, windowY = 1080, 920 # track images should be 1080x920
@@ -97,7 +98,8 @@ class PhysicalObject(pyglet.sprite.Sprite):
         self.x += self.velocity_x * dt
         self.y += self.velocity_y * dt
 
-eyeBatch = pyglet.graphics.Batch()  
+eyeBatch = pyglet.graphics.Batch()
+
 class Car(PhysicalObject):
     class Eye(PhysicalObject):
         def __init__(self, length, angle, car, *args, **kwargs):
@@ -111,7 +113,7 @@ class Car(PhysicalObject):
         def read(self):
             x, y = self.targetXY()
             if 0 < x < 1080 and 0 < y < 920 and boundsMatrix[x][y]:
-                print(self.angle)
+                return 1
 
         def updateLine(self):
             self.line.x = self.x
@@ -125,14 +127,17 @@ class Car(PhysicalObject):
         
 
     def __init__(self, setSpeed, setRotateSpeed, eyeDist, eyeAngles, *args, **kwargs):
+        super().__init__(img=carFile, *args, **kwargs)
         self.speed = setSpeed
         self.rotate_speed = setRotateSpeed
+        self.dead = False
+        self.timeAlive = 0
         self.mu = .999 # FRICTION CONSTANT
-        super().__init__(img=carFile, *args, **kwargs)
         self.rotation = -90
         self.startX, self.startY = self.x, self.y
         self.makeEyes(eyeDist, eyeAngles)
         self.control = dict(left=False, right=False, up=False, down=False)
+        self.gatesVisited = {}
 
     def makeEyes(self, eyeDist, eyeAngles):
         self.eyes = []
@@ -147,12 +152,8 @@ class Car(PhysicalObject):
         elif symbol == key.RIGHT:
             self.control['right'] = True
         elif symbol == key.DOWN:
-            asldjgh = 34
-            # self.control['down'] = True
+            self.control['down'] = True
     
-    def on_mouse_press(self, x, y, button, modifiers):
-        print("mouse", x, y, gatesMatrix[x][y])
-
     def on_key_release(self, symbol, modifiers):
         if symbol == key.UP:
             self.control['up'] = False
@@ -166,6 +167,18 @@ class Car(PhysicalObject):
     def magnitudeVelocity(self):
         return np.linalg.norm(np.array([self.velocity_x, self.velocity_y])) 
     
+    def checkGates(self):
+        x, y = int(self.x), int(self.y)
+        if gateObj.isGate(x, y):
+            for gate in self.gatesVisited:
+                if gateObj.sameGateAs(gate[0], gate[1], x, y):
+                    return
+            if len(self.gatesVisited) == 0:
+                self.gatesVisited[(x,y)] = self.timeAlive
+                self.lastGate = (x,y)  
+            else:
+                self.gatesVisited[(x,y)] = self.timeAlive - self.gatesVisited[self.lastGate]
+
     def friction(self):
         self.velocity_x *= self.mu
         self.velocity_y *= self.mu
@@ -174,10 +187,18 @@ class Car(PhysicalObject):
             self.velocity_y = 0
     
     def kill(self):
-        self.rotation = -90
-        self.velocity_x, self.velocity_y = 0, 0
-        self.x, self.y = self.startX, self.startY
-        self.rotateEyes(0, True)
+        self.dead = True
+        print("Speed  :", self.speed)
+        print("Fitness:", round(self.getFitness(), 5))
+        print("Died at:", round(self.timeAlive, 5))
+        print("# Gates:", len(self.gatesVisited))
+        print("==============================")
+        # self.rotation = -90
+        # self.velocity_x, self.velocity_y = 0, 0
+        # self.x, self.y = self.startX, self.startY
+        # self.rotateEyes(0, True)
+        # self.gatesVisited = {}
+        # self.timeAlive = 0
     
     def checkBounds(self):
         if not (0 < self.x < 1080) or not (0 < self.y < 920) or boundsMatrix[int(self.x)][int(self.y)]:
@@ -188,7 +209,6 @@ class Car(PhysicalObject):
             eye.x = self.x
             eye.y = self.y
             eye.updateLine()
-
 
     def rotateEyes(self, theta, kill=False):
         if kill:
@@ -235,15 +255,37 @@ class Car(PhysicalObject):
         
 
     def readEyes(self):
+        vector = []
         for eye in self.eyes:
-            eye.read()
+            vector.append(eye.read())
+        return vector
+
+    def getFitness(self):
+        if len(self.gatesVisited) == 0:
+            return 0
+        numGates = len(self.gatesVisited)
+        averageGateTime = sum(self.gatesVisited.values()) / numGates
+        return numGates**3 / averageGateTime
+        
+    def checkStopConditions(self):
+        if len(self.gatesVisited) == 0 and self.timeAlive > 10:
+            print("Car has not moved sufficient distance")
+            self.kill()
+        if len(self.gatesVisited) == 20:
+            print("Car has completed the course")
+            self.kill()
 
     def update(self, dt):
+        if self.dead:
+            return
+        self.timeAlive += dt
         super(Car, self).update(dt)
         self.friction()
         self.checkBounds()
         self.readEyes()
         self.moveEyes()
+        self.checkGates()
+        self.checkStopConditions()
         if self.control['left']:
             self.turnLeft(dt)
         if self.control['right']:
@@ -258,7 +300,7 @@ def update(dt):
     for obj in cars:
         obj.update(dt)
 
-gen = Generation.firstGeneration(Car, 1, showEye=True)
+gen = Generation.firstGeneration(Car, 10, showEye=True)
 cars = gen.cars # Creates a generation of 5 cars
 for obj in cars:
     window.push_handlers(obj)
