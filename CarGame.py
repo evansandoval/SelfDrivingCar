@@ -1,4 +1,4 @@
-import pyglet, math, Gates, Brain, numpy as np
+import pyglet, math, Gates, numpy as np
 from pyglet import shapes
 from pyglet.window import key
 from PIL import Image
@@ -58,9 +58,9 @@ class PhysicalObject(pyglet.sprite.Sprite):
     def update(self, dt):
         self.x += self.velocity_x * dt
         self.y += self.velocity_y * dt
-
 eyeBatch = pyglet.graphics.Batch()
 
+# CAR CLASS
 class Car(PhysicalObject):
     class Eye(PhysicalObject):
         def __init__(self, length, angle, car, *args, **kwargs):
@@ -75,6 +75,7 @@ class Car(PhysicalObject):
             x, y = self.targetXY()
             if 0 < x < 1080 and 0 < y < 920 and boundsMatrix[x][y]:
                 return 1
+            return 0
 
         def updateLine(self):
             self.line.x = self.x
@@ -86,8 +87,7 @@ class Car(PhysicalObject):
             angle_radians = math.radians(self.rotation + 90)
             return round(self.x + self.length * math.sin(angle_radians)), round(self.y + self.length * math.cos(angle_radians))
         
-
-    def __init__(self, setSpeed, setRotateSpeed, eyeDist, eyeAngles, *args, **kwargs):
+    def __init__(self, setSpeed, setRotateSpeed, eyeDist, eyeAngles, brain, *args, **kwargs):
         super().__init__(img=carFile, *args, **kwargs)
         self.speed = setSpeed
         self.rotate_speed = setRotateSpeed
@@ -99,6 +99,8 @@ class Car(PhysicalObject):
         self.makeEyes(eyeDist, eyeAngles)
         self.control = dict(left=False, right=False, up=False, down=False)
         self.gatesVisited = {}
+        self.control = {'up': 0, 'left': 0, 'down': 0, 'right': 0}
+        self.brain = brain
 
     def makeEyes(self, eyeDist, eyeAngles):
         self.eyes = []
@@ -107,23 +109,23 @@ class Car(PhysicalObject):
     
     def on_key_press(self, symbol, modifiers):
         if symbol == key.UP:
-            self.control['up'] = True
+            self.control['up'] = 1
         elif symbol == key.LEFT:
-            self.control['left'] = True
+            self.control['left'] = 1
         elif symbol == key.RIGHT:
-            self.control['right'] = True
+            self.control['right'] = 1
         elif symbol == key.DOWN:
-            self.control['down'] = True
+            self.control['down'] = 1
     
     def on_key_release(self, symbol, modifiers):
         if symbol == key.UP:
-            self.control['up'] = False
+            self.control['up'] = 0
         elif symbol == key.LEFT:
-            self.control['left'] = False
+            self.control['left'] = 0
         elif symbol == key.RIGHT:
-            self.control['right'] = False
+            self.control['right'] = 0
         elif symbol == key.DOWN:
-            self.control['down'] = False
+            self.control['down'] = 0
 
     def magnitudeVelocity(self):
         return np.linalg.norm(np.array([self.velocity_x, self.velocity_y])) 
@@ -149,11 +151,11 @@ class Car(PhysicalObject):
     
     def kill(self):
         self.dead = True
-        print("Speed  :", self.speed)
-        print("Fitness:", round(self.getFitness(), 5))
-        print("Died at:", round(self.timeAlive, 5))
-        print("# Gates:", len(self.gatesVisited))
-        print("==============================")
+        # print("Speed  :", self.speed)
+        # print("Fitness:", round(self.getFitness(), 5))
+        # print("Died at:", round(self.timeAlive, 5))
+        # print("# Gates:", len(self.gatesVisited))
+        # print("==============================")
         # self.rotation = -90
         # self.velocity_x, self.velocity_y = 0, 0
         # self.x, self.y = self.startX, self.startY
@@ -190,7 +192,6 @@ class Car(PhysicalObject):
         newRotatedVector = rotateByTheta(self.velocity_x, self.velocity_y, dtheta)
         self.velocity_x, self.velocity_y = newRotatedVector[0], newRotatedVector[1]
 
-
     def turnRight(self, dt):  
         theta0 = -math.radians(self.rotation)
         self.rotation += self.rotate_speed * dt
@@ -214,7 +215,6 @@ class Car(PhysicalObject):
         self.velocity_x -= force_x
         self.velocity_y -= force_y
         
-
     def readEyes(self):
         vector = []
         for eye in self.eyes:
@@ -229,11 +229,11 @@ class Car(PhysicalObject):
         return numGates**3 / averageGateTime
         
     def checkStopConditions(self):
-        if len(self.gatesVisited) == 0 and self.timeAlive > 10:
-            print("Car has not moved sufficient distance")
+        if len(self.gatesVisited) == 0 and self.timeAlive > 7:
+            # print("Car has not moved sufficient distance")
             self.kill()
         if len(self.gatesVisited) == 20:
-            print("Car has completed the course")
+            # print("Car has completed the course")
             self.kill()
 
     def moveCar(self, dt):
@@ -246,6 +246,14 @@ class Car(PhysicalObject):
         if self.control['down']:
             self.backward(dt)
 
+    def processBrain(self):
+        inputVector = self.readEyes()
+        outputVector = self.brain.process(inputVector)
+        self.control['left'] = outputVector[0]
+        self.control['up'] = outputVector[1]
+        self.control['right'] = outputVector[2]
+        self.control['down'] = outputVector[3]
+
     def update(self, dt):
         if self.dead:
             return
@@ -256,6 +264,7 @@ class Car(PhysicalObject):
         self.moveEyes()
         self.checkGates()
         self.checkStopConditions()
+        self.processBrain()
         self.moveCar(dt)
 
 # Universal update function by pyglet
@@ -263,7 +272,7 @@ def update(dt):
     for obj in cars:
         obj.update(dt)
 
-gen = Generation.firstGeneration(Car, 10, showEye=True)
+gen = Generation.firstGeneration(Car, 100, showEye=True)
 cars = gen.cars # Creates a generation of 5 cars
 for obj in cars:
     window.push_handlers(obj)
@@ -277,6 +286,9 @@ def on_draw():
         obj.draw()
     if gen.showEyes:
         eyeBatch.draw()
+    
+    if gen.isDead():
+        gen.endGeneration()
 
 if __name__ == '__main__':
     pyglet.clock.schedule_interval(update, 1/120.0)
