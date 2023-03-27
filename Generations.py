@@ -4,12 +4,12 @@ from Brain import Brain
 # DEFAULT PARAMETERS
 defaultStartX = 150
 defaultStartY = 415
-defaultSpeed = 100
-defaultTurnRadius = 100
+defaultSpeed = 100.0
+defaultTurnRadius = 100.0
 # defaultEyes = 3 # maybe even make this an input
-defaultEyeParams = [(40,-45), (40,0), (40, 45)]
+defaultEyeParams = [(50, -90),(40,-45), (130,0), (40, 45), (50, 90)]
 
-defaultParams = [defaultSpeed, defaultTurnRadius]
+defaultParams = np.array([defaultSpeed, defaultTurnRadius])
 
 # INPUTS
 # leftEye = 0 or 1 (inbounds or not inbounds)
@@ -31,7 +31,7 @@ class Generation:
         self.numCars = numCars
         self.Car = CarConstructor
         self.cars = []
-        for i in range(numCars):
+        for _ in range(numCars):
             speed = params[0]
             turnRadius = params[1]
             brain = Brain(self.initBrainMatrices(len(eyeParams)))        
@@ -39,8 +39,16 @@ class Generation:
 
 
 
-    def createGeneration(self, params, brainParams=None):
+    def createGeneration(self, params, eyeParams, brainParams=None):
         self.number += 1
+        self.cars = []
+        for i in range(self.numCars):
+            speed = params[i][0]
+            turnRadius = params[i][1]
+            brain = Brain(brainParams[i])     
+            self.cars.append(self.Car(speed, turnRadius, eyeParams, brain, x=defaultStartX, y=defaultStartY, batch=None))
+
+
         
     def initBrainMatrices(self, numInputs):
         # Brain needs at least three matrices in order to compute
@@ -55,16 +63,41 @@ class Generation:
     
     def nextGeneration(self):
         self.sortByFitness()
-        print("The top 10 fitness scores were:")
+        print(f"Generation {self.number}'s top 10 fitness scores:")
         for i in range(10):
             print(i, self.cars[i].getFitness())
         topHalf = self.cars[0:self.numCars//2]
         newParams = self.mixMutate([car.params       for car in topHalf])
         newEyes   = self.newEyes  ([car.eyeParams    for car in topHalf])
         # eyes need their own mix function to randomly mutate new eyes
-        newBrains = self.mixMutate([car.brain.layers for car in topHalf])
-        self.createGeneration(newParams, newBrains)
+        newBrains = self.newBrain(topHalf)
+        self.createGeneration(newParams, defaultEyeParams, newBrains)
+        
 
+    def newBrain(self, topHalf):
+        numberOfLayers = len(topHalf[0].brain.layers)
+        #collects new generation of newly mutated weights matrices (organized in order)
+        separateLayers = []
+        for layerIndex in range(numberOfLayers):
+            separateLayers.append(self.mixMutate([car.brain.layers[layerIndex] for car in topHalf]))
+        #reorganize the new matrices into where they're supposed to be in the brains
+        brainList = []
+        numCars = len(separateLayers[0])
+        for carIndex in range(numCars):
+            brainList.append([separateLayers[layerIndex][carIndex] for layerIndex in range(numberOfLayers)])
+        return brainList
+
+    def newEyes(self, lst):
+        return
+
+    def mixMutate(self, lst):
+        for i in range(len(lst)):
+                average = (lst[i] + lst[i+1]) / 2
+                lst.append(average)
+        for item in lst:
+            shape = np.shape(item)
+            item += np.random.normal(size=shape)
+        return lst
 
 
     def isDead(self):

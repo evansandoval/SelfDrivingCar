@@ -29,12 +29,13 @@ class GatesTracker:
             self.wqu.union(y * 1080 + x, (y) * 1080 + x + 1)
 
     def isGate(self, x,y):
+        x, y = int(x), int(y)
         return 0 < x < 1080 and 0 < y < 920 and self.gatesMatrix[x][y]
     
     def count(self):
         return self.wqu.count
     
     def sameGateAs(self, x1, y1, x2, y2):
-        point1 = x1 + y1*1080
-        point2 = x2 + y2*1080
+        point1 = int(x1 + y1*1080)
+        point2 = int(x2 + y2*1080)
         return self.wqu.connected(point1, point2)

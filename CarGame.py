@@ -45,7 +45,7 @@ carFile = pyglet.resource.image("car.png")
 carFile.anchor_x, carFile.anchor_y  = carFile.width // 2, carFile.height // 2 
 lineFile = pyglet.resource.image("line.png")
 lineFile.anchor_x, lineFile.anchor_y  = 0 , lineFile.height // 2
-trackFile= pyglet.resource.image("track1.png")
+trackFile= pyglet.resource.image("track1gates.png")
 trackImage = pyglet.sprite.Sprite(img=trackFile)
 
 # PYGLET OBJECTS
@@ -97,7 +97,7 @@ class Car(PhysicalObject):
         self.rotation = -90
         self.startX, self.startY = self.x, self.y
         self.makeEyes(eyeParams)
-        self.params = [setSpeed, setRotateSpeed]
+        self.params = np.array([setSpeed, setRotateSpeed])
         self.eyeParams = eyeParams
         self.control = dict(left=False, right=False, up=False, down=False)
         self.gatesVisited = {}
@@ -153,6 +153,9 @@ class Car(PhysicalObject):
     
     def kill(self):
         self.dead = True
+        for eye in self.eyes:
+            eye.line.visible = False
+        self.visible = False
         # print("Speed  :", self.speed)
         # print("Fitness:", round(self.getFitness(), 5))
         # print("Died at:", round(self.timeAlive, 5))
@@ -237,6 +240,10 @@ class Car(PhysicalObject):
         if len(self.gatesVisited) == 20:
             # print("Car has completed the course")
             self.kill()
+        if len(self.gatesVisited) == 1 and any([gateObj.sameGateAs(x, y, 147, 326) for (x, y) in self.gatesVisited.keys()]):
+            #print("Going backwards")
+            self.kill()
+            self.getFitness = lambda : 0
 
     def moveCar(self, dt):
         if self.control['left']:
@@ -265,26 +272,23 @@ class Car(PhysicalObject):
         self.checkBounds()
         self.moveEyes()
         self.checkGates()
-        self.checkStopConditions()
         self.processBrain()
         self.moveCar(dt)
-
-# Universal update function by pyglet
-def update(dt):
-    for obj in cars:
-        obj.update(dt)
+        self.checkStopConditions()
 
 gen = Generation(Car, 100, showEyes=True)
-cars = gen.cars # Creates a generation of 5 cars
-for obj in cars:
+# Universal update function by pyglet
+def update(dt):
+    for obj in gen.cars:
+        obj.update(dt)
+for obj in gen.cars:
     window.push_handlers(obj)
 
 @window.event
 def on_draw():
     window.clear()
-
     trackImage.draw()
-    for obj in cars:
+    for obj in gen.cars:
         obj.draw()
     if gen.showEyes:
         eyeBatch.draw()
