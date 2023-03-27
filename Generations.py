@@ -4,10 +4,10 @@ from Brain import Brain
 # DEFAULT PARAMETERS
 defaultStartX = 150
 defaultStartY = 415
-defaultSpeed = 100.0
+defaultSpeed = 60.0
 defaultTurnRadius = 100.0
 # defaultEyes = 3 # maybe even make this an input
-defaultEyeParams = [(50, -90),(40,-45), (130,0), (40, 45), (50, 90)]
+defaultEyeParams = [(100,-45), (100, 45)]
 
 defaultParams = np.array([defaultSpeed, defaultTurnRadius])
 
@@ -43,8 +43,8 @@ class Generation:
         self.number += 1
         self.cars = []
         for i in range(self.numCars):
-            speed = params[i][0]
-            turnRadius = params[i][1]
+            speed = params[0]
+            turnRadius = params[1]
             brain = Brain(brainParams[i])     
             self.cars.append(self.Car(speed, turnRadius, eyeParams, brain, x=defaultStartX, y=defaultStartY, batch=None))
 
@@ -66,20 +66,20 @@ class Generation:
         print(f"Generation {self.number}'s top 10 fitness scores:")
         for i in range(10):
             print(i, self.cars[i].getFitness())
-        topHalf = self.cars[0:self.numCars//2]
-        newParams = self.mixMutate([car.params       for car in topHalf])
-        newEyes   = self.newEyes  ([car.eyeParams    for car in topHalf])
+        top20 = self.cars[0:self.numCars//5]
+        newParams = self.mixMutate([car.params       for car in top20])
+        newEyes   = self.newEyes  ([car.eyeParams    for car in top20])
         # eyes need their own mix function to randomly mutate new eyes
-        newBrains = self.newBrain(topHalf)
-        self.createGeneration(newParams, defaultEyeParams, newBrains)
+        newBrains = self.newBrain(top20)
+        self.createGeneration(defaultParams, defaultEyeParams, newBrains)
         
 
-    def newBrain(self, topHalf):
-        numberOfLayers = len(topHalf[0].brain.layers)
+    def newBrain(self, top20):
+        numberOfLayers = len(top20[0].brain.layers)
         #collects new generation of newly mutated weights matrices (organized in order)
         separateLayers = []
         for layerIndex in range(numberOfLayers):
-            separateLayers.append(self.mixMutate([car.brain.layers[layerIndex] for car in topHalf]))
+            separateLayers.append(self.mixMutate([car.brain.layers[layerIndex] for car in top20]))
         #reorganize the new matrices into where they're supposed to be in the brains
         brainList = []
         numCars = len(separateLayers[0])
@@ -92,12 +92,26 @@ class Generation:
 
     def mixMutate(self, lst):
         for i in range(len(lst)):
-                average = (lst[i] + lst[i+1]) / 2
-                lst.append(average)
+                child = self.crossOver(lst[i], lst[i+1]) # replace this with a genetic crossover function instead
+                lst.append(child)
+                lst.append(child)
+                lst.append(child)
+                lst.append(child)
         for item in lst:
             shape = np.shape(item)
-            item += np.random.normal(size=shape)
+            item += np.random.normal(0, .12, size=shape)
         return lst
+    
+    def crossOver(self, lst1, lst2):
+        child = []
+        # Favors parent with higher fitness
+        for i in range(len(lst1)):
+            sample = np.random.uniform()
+            if sample < 0.8:
+                child.append(lst1[i])
+            else: child.append(lst2[i])
+        return np.array(child)
+
 
 
     def isDead(self):

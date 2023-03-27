@@ -231,7 +231,9 @@ class Car(PhysicalObject):
             return 0
         numGates = len(self.gatesVisited)
         averageGateTime = sum(self.gatesVisited.values()) / numGates
-        return numGates**3 / averageGateTime
+        if numGates == 20:
+            return numGates**3 / averageGateTime
+        else: return numGates
 
     def checkStopConditions(self):
         if len(self.gatesVisited) == 0 and self.timeAlive > 7:
@@ -244,6 +246,9 @@ class Car(PhysicalObject):
             #print("Going backwards")
             self.kill()
             self.getFitness = lambda : 0
+        if self.timeAlive > 40:
+            # print("timeout")
+            self.kill()
 
     def moveCar(self, dt):
         if self.control['left']:
@@ -288,6 +293,7 @@ for obj in gen.cars:
 def on_draw():
     window.clear()
     trackImage.draw()
+
     for obj in gen.cars:
         obj.draw()
     if gen.showEyes:
