@@ -1,4 +1,6 @@
 - Add speed as an input to the Car's Brain (so cars know when they're going too fast)
 - Reproduce cars with their RELATIVE fitness (more fit cars reproduce more)
+- Modify nextGeneration method to retain the highest fitness cars
 - Implement evolution of eye and car parameters
 - Explore local minima problem
+- Add Biases to Brain Class
