@@ -92,14 +92,11 @@ class Generation:
 
     def mixMutate(self, lst):
         for i in range(len(lst)):
-                child = self.crossOver(lst[i], lst[i+1]) # replace this with a genetic crossover function instead
-                lst.append(child)
-                lst.append(child)
-                lst.append(child)
-                lst.append(child)
-        for item in lst:
-            shape = np.shape(item)
-            item += np.random.normal(0, .12, size=shape)
+            child = self.crossOver(lst[i], lst[i+1]) # replace this with a genetic crossover function instead
+            for _ in range(4): # need four more children
+                shape = np.shape(child)
+                mutatedChild = child + np.random.normal(0, .12, size=shape)
+                lst.append(mutatedChild)
         return lst
     
     def crossOver(self, lst1, lst2):
