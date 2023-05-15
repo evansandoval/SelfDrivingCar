@@ -8,8 +8,8 @@ defaultSpeed = 60.0
 defaultTurnRadius = 100.0
 # defaultEyes = 3 # maybe even make this an input
 defaultEyeParams = [(100,-45), (100, 45)]
-
 defaultParams = np.array([defaultSpeed, defaultTurnRadius])
+topBrainLayers = [np.loadtxt("layer-0.csv"), np.loadtxt("layer-1.csv"), np.loadtxt("layer-2.csv")]
 
 # INPUTS
 # leftEye = 0 or 1 (inbounds or not inbounds)
@@ -31,10 +31,13 @@ class Generation:
         self.numCars = numCars
         self.Car = CarConstructor
         self.cars = []
-        for _ in range(numCars):
+        for i in range(numCars):
             speed = params[0]
             turnRadius = params[1]
-            brain = Brain(self.initBrainMatrices(len(eyeParams) + 1))        
+            if i == 0:
+                brain = Brain(topBrainLayers)
+            else:
+                brain = Brain(self.initBrainMatrices(len(eyeParams) + 1))        
             self.cars.append(self.Car(speed, turnRadius, eyeParams, brain, x=defaultStartX, y=defaultStartY, batch=None))
 
 
@@ -66,15 +69,17 @@ class Generation:
         print(f"Generation {self.number}'s top 10 fitness scores:")
         for i in range(10):
             print(i, self.cars[i].getFitness())
+        for i in range(len(self.cars[0].brain.layers)):
+            np.savetxt("layer-" + str(i) + ".csv", self.cars[0].brain.layers[i])
         top20 = self.cars[0:self.numCars//5]
         newParams = self.mixMutate([car.params       for car in top20])
         newEyes   = self.newEyes  ([car.eyeParams    for car in top20])
         # eyes need their own mix function to randomly mutate new eyes
-        newBrains = self.newBrain(top20)
+        newBrains = self.newBrains(top20)
         self.createGeneration(defaultParams, defaultEyeParams, newBrains)
         
-
-    def newBrain(self, top20):
+    #takes a list of brains and generates a list of new brains
+    def newBrains(self, top20):
         numberOfLayers = len(top20[0].brain.layers)
         #collects new generation of newly mutated weights matrices (organized in order)
         separateLayers = []
@@ -89,10 +94,12 @@ class Generation:
 
     def newEyes(self, lst):
         return
-
+    
+    # takes a list of vectors (of the same parameter) and performs genetic crossover and random mutation
     def mixMutate(self, lst):
         for i in range(len(lst)):
-            child = self.crossOver(lst[i], lst[i+1]) # replace this with a genetic crossover function instead
+            #child = self.crossOver(lst[i], lst[i+1])
+            child = lst[i]
             for _ in range(4): # need four more children
                 shape = np.shape(child)
                 mutatedChild = child + np.random.normal(0, .12, size=shape)

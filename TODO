@@ -1,6 +1,6 @@
-- Add speed as an input to the Car's Brain (so cars know when they're going too fast)
 - Reproduce cars with their RELATIVE fitness (more fit cars reproduce more)
 - Implement evolution of eye and car parameters
 - Explore local minima problem
 - Add Biases to Brain Class
+    - How do we want to deal with magnitude velocity being a nonbinary value?
 - Make other tracks to test generalization

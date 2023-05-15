@@ -282,7 +282,7 @@ class Car(PhysicalObject):
         self.moveCar(dt)
         self.checkStopConditions()
 
-gen = Generation(Car, 1, showEyes=True)
+gen = Generation(Car, 100, showEyes=True)
 # Universal update function by pyglet
 def update(dt):
     for obj in gen.cars:
@@ -301,6 +301,7 @@ def on_draw():
         eyeBatch.draw()
     
     if gen.isDead():
+        print(len(gen.cars))
         gen.nextGeneration()
 
 if __name__ == '__main__':
