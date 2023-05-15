@@ -2,7 +2,7 @@ import numpy as np
 
 # AI for a car with len(inputVector) eyes, two hidden layers of length 8, and outputs a list of length 4
 class Brain:
-
+    #                   Extra value is for velocity
     #INPUT LAYER IS 8 X (NUM_EYES + 1), HIDDEN LAYER IS 8X8,  OUTPUTLAYER IS 4 X 8
     def __init__(self, listOfLayers):
         self.layers = listOfLayers ## layers is essentially a tensor

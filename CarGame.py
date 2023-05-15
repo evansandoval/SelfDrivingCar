@@ -262,6 +262,7 @@ class Car(PhysicalObject):
 
     def processBrain(self):
         inputVector = self.readEyes()
+        inputVector.append(self.magnitudeVelocity())
         outputVector = self.brain.process(inputVector)
         self.control['left'] = outputVector[0]
         self.control['up'] = outputVector[1]
@@ -281,7 +282,7 @@ class Car(PhysicalObject):
         self.moveCar(dt)
         self.checkStopConditions()
 
-gen = Generation(Car, 100, showEyes=True)
+gen = Generation(Car, 1, showEyes=True)
 # Universal update function by pyglet
 def update(dt):
     for obj in gen.cars:

@@ -34,7 +34,7 @@ class Generation:
         for _ in range(numCars):
             speed = params[0]
             turnRadius = params[1]
-            brain = Brain(self.initBrainMatrices(len(eyeParams)))        
+            brain = Brain(self.initBrainMatrices(len(eyeParams) + 1))        
             self.cars.append(self.Car(speed, turnRadius, eyeParams, brain, x=defaultStartX, y=defaultStartY, batch=None))
 
 
@@ -52,7 +52,7 @@ class Generation:
         
     def initBrainMatrices(self, numInputs):
         # Brain needs at least three matrices in order to compute
-        #     8 x numEyes || 8 x 8 || 4 x 8
+        #     8 x numEyes + 1 || 8 x 8 || 4 x 8
         # to add more hidden layers, simply add more 8x8 matrices in the middle
 
         # initialize random matrices using a UNIFORM distribution
