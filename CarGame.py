@@ -118,8 +118,6 @@ class Car(PhysicalObject):
             self.control['right'] = 1
         elif symbol == key.DOWN:
             self.control['down'] = 1
-        elif symbol == key.K:
-            self.control['endsim'] = 1
     
     def on_key_release(self, symbol, modifiers):
         if symbol == key.UP:
@@ -130,8 +128,6 @@ class Car(PhysicalObject):
             self.control['right'] = 0
         elif symbol == key.DOWN:
             self.control['down'] = 0
-        elif symbol == key.K:
-            self.control['endsim'] = 0
 
     def magnitudeVelocity(self):
         return np.linalg.norm(np.array([self.velocity_x, self.velocity_y])) 
@@ -247,8 +243,8 @@ class Car(PhysicalObject):
             #print("Going backwards")
             self.kill()
             self.getFitness = lambda : 0
-        if self.control['endsim']:
-            # print('simulation manuall terminated')
+        if self.timeAlive > 45:
+            # print('timeout')
             self.kill()
 
     def moveCar(self, dt):
