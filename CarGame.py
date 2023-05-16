@@ -101,7 +101,7 @@ class Car(PhysicalObject):
         self.eyeParams = eyeParams
         self.control = dict(left=False, right=False, up=False, down=False)
         self.gatesVisited = {}
-        self.control = {'up': 0, 'left': 0, 'down': 0, 'right': 0}
+        self.control = {'up': 0, 'left': 0, 'down': 0, 'right': 0, 'endsim': 0}
         self.brain = brain
 
     def makeEyes(self, eyeParams):
@@ -118,6 +118,8 @@ class Car(PhysicalObject):
             self.control['right'] = 1
         elif symbol == key.DOWN:
             self.control['down'] = 1
+        elif symbol == key.K:
+            self.control['endsim'] = 1
     
     def on_key_release(self, symbol, modifiers):
         if symbol == key.UP:
@@ -128,6 +130,8 @@ class Car(PhysicalObject):
             self.control['right'] = 0
         elif symbol == key.DOWN:
             self.control['down'] = 0
+        elif symbol == key.K:
+            self.control['endsim'] = 0
 
     def magnitudeVelocity(self):
         return np.linalg.norm(np.array([self.velocity_x, self.velocity_y])) 
@@ -239,15 +243,12 @@ class Car(PhysicalObject):
         if len(self.gatesVisited) == 0 and self.timeAlive > 7:
             # print("Car has not moved sufficient distance")
             self.kill()
-        if len(self.gatesVisited) == 20:
-            # print("Car has completed the course")
-            self.kill()
         if len(self.gatesVisited) == 1 and any([gateObj.sameGateAs(x, y, 147, 326) for (x, y) in self.gatesVisited.keys()]):
             #print("Going backwards")
             self.kill()
             self.getFitness = lambda : 0
-        if self.timeAlive > 40:
-            # print("timeout")
+        if self.control['endsim']:
+            # print('simulation manuall terminated')
             self.kill()
 
     def moveCar(self, dt):
