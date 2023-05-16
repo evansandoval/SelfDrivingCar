@@ -66,6 +66,7 @@ class Generation:
         print(f"Generation {self.number}'s top 10 fitness scores:")
         for i in range(10):
             print(i, self.cars[i].getFitness())
+        self.saveBrain(self.cars[0], "Top-Brain")
         top20 = self.cars[0:self.numCars//5]
         newParams = self.mixMutate([car.params       for car in top20])
         newEyes   = self.newEyes  ([car.eyeParams    for car in top20])
@@ -73,7 +74,11 @@ class Generation:
         newBrains = self.newBrain(top20)
         self.createGeneration(defaultParams, defaultEyeParams, newBrains)
         
+    def saveBrain(self, car, titleString):
+        for i in range(len(car.brain.layers)):
+            np.savetxt("Saved-Brains/" + titleString + "layer-" + str(i) + ".csv", self.cars[0].brain.layers[i])
 
+    
     def newBrain(self, top20):
         numberOfLayers = len(top20[0].brain.layers)
         #collects new generation of newly mutated weights matrices (organized in order)
