@@ -38,7 +38,9 @@ class Generation:
             if i == 0:
                 brain = Brain(topBrainLayers)
             else:
-                brain = Brain(self.initBrainMatrices(len(eyeParams) + 1))   
+                brain = Brain(self.initBrainMatrices(len(eyeParams)))   
+            self.cars.append(self.Car(speed, turnRadius, eyeParams, brain, x=defaultStartX, y=defaultStartY, batch=None))
+
 
 
 
