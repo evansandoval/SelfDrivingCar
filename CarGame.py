@@ -236,7 +236,7 @@ class Car(PhysicalObject):
         else: return numGates
 
     def checkStopConditions(self):
-        if len(self.gatesVisited) == 0 and self.timeAlive > 7:
+        if len(self.gatesVisited) == 0 and self.timeAlive > 5:
             # print("Car has not moved sufficient distance")
             self.kill()
         if len(self.gatesVisited) == 1 and any([gateObj.sameGateAs(x, y, 147, 326) for (x, y) in self.gatesVisited.keys()]):
@@ -278,7 +278,7 @@ class Car(PhysicalObject):
         self.moveCar(dt)
         self.checkStopConditions()
 
-gen = Generation(Car, 100, showEyes=True)
+gen = Generation(Car, 100, showEyes=False)
 # Universal update function by pyglet
 def update(dt):
     for obj in gen.cars:

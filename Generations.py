@@ -10,7 +10,7 @@ defaultTurnRadius = 100.0
 defaultEyeParams = [(100,-45), (100, 45)]
 
 defaultParams = np.array([defaultSpeed, defaultTurnRadius])
-topBrainLayers = [np.loadtxt("Saved-Brains/layer-0.csv"), np.loadtxt("Saved-Brains/layer-1.csv"), np.loadtxt("Saved-Brains/layer-2.csv")]
+topBrainLayers = [np.loadtxt("BestBrain/layer-0.csv"), np.loadtxt("BestBrain/layer-1.csv"), np.loadtxt("BestBrain/layer-2.csv")]
 
 # INPUTS
 # leftEye = 0 or 1 (inbounds or not inbounds)
@@ -35,7 +35,7 @@ class Generation:
         for i in range(numCars):
             speed = params[0]
             turnRadius = params[1]
-            if i == 0:
+            if i < 20: #inject 20 ideal cars
                 brain = Brain(topBrainLayers)
             else:
                 brain = Brain(self.initBrainMatrices(len(eyeParams)))   
