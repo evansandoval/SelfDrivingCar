@@ -12,7 +12,7 @@ def rotateByTheta(vx, vy, theta):
     return np.matmul(R, x)
 
 ## TRACK IMAGE PROCESSING
-trackIm = Image.open('./images/track1.png') 
+trackIm = Image.open('./images/track2.png') 
 pixels = trackIm.load()
 boundsMatrix = np.zeros((1080, 920))
 for x in range(1080):
@@ -23,7 +23,7 @@ for x in range(1080):
 
 
 ## GATE IMAGE PROCESSING
-gateIm = Image.open("./images/track1gates.png")
+gateIm = Image.open("./images/track2gates.png")
 pixels = gateIm.load()
 gatesMatrix = np.zeros((1080,920))
 for x in range(1080):
@@ -45,7 +45,7 @@ carFile = pyglet.resource.image("car.png")
 carFile.anchor_x, carFile.anchor_y  = carFile.width // 2, carFile.height // 2 
 lineFile = pyglet.resource.image("line.png")
 lineFile.anchor_x, lineFile.anchor_y  = 0 , lineFile.height // 2
-trackFile= pyglet.resource.image("track1gates.png")
+trackFile= pyglet.resource.image("track2gates.png")
 trackImage = pyglet.sprite.Sprite(img=trackFile)
 
 # PYGLET OBJECTS
@@ -239,10 +239,10 @@ class Car(PhysicalObject):
         if len(self.gatesVisited) == 0 and self.timeAlive > 5:
             # print("Car has not moved sufficient distance")
             self.kill()
-        if len(self.gatesVisited) == 1 and any([gateObj.sameGateAs(x, y, 147, 326) for (x, y) in self.gatesVisited.keys()]):
-            #print("Going backwards")
-            self.kill()
-            self.getFitness = lambda : 0
+        # if len(self.gatesVisited) == 1 and any([gateObj.sameGateAs(x, y, 147, 326) for (x, y) in self.gatesVisited.keys()]):
+        #     #print("Going backwards")
+        #     self.kill()
+        #     self.getFitness = lambda : 0
         if self.timeAlive > 45:
             # print('timeout')
             self.kill()

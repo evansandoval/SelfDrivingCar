@@ -1,5 +1,3 @@
-- Add speed as an input to the Car's Brain (so cars know when they're going too fast)
 - Reproduce cars with their RELATIVE fitness (more fit cars reproduce more)
 - Implement evolution of eye and car parameters
-- Add Biases to Brain Class
 - Make other tracks to test generalization

@@ -2,8 +2,8 @@ import numpy as np
 from Brain import Brain
 
 # DEFAULT PARAMETERS
-defaultStartX = 150
-defaultStartY = 415
+defaultStartX = 123
+defaultStartY = 300
 defaultSpeed = 60.0
 defaultTurnRadius = 100.0
 # defaultEyes = 3 # maybe even make this an input
