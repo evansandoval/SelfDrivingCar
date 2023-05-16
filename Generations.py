@@ -10,6 +10,7 @@ defaultTurnRadius = 100.0
 defaultEyeParams = [(100,-45), (100, 45)]
 
 defaultParams = np.array([defaultSpeed, defaultTurnRadius])
+topBrainLayers = [np.loadtxt("Saved-Brains/layer-0.csv"), np.loadtxt("Saved-Brains/layer-1.csv"), np.loadtxt("Saved-Brains/layer-2.csv")]
 
 # INPUTS
 # leftEye = 0 or 1 (inbounds or not inbounds)
@@ -31,11 +32,13 @@ class Generation:
         self.numCars = numCars
         self.Car = CarConstructor
         self.cars = []
-        for _ in range(numCars):
+        for i in range(numCars):
             speed = params[0]
             turnRadius = params[1]
-            brain = Brain(self.initBrainMatrices(len(eyeParams)))        
-            self.cars.append(self.Car(speed, turnRadius, eyeParams, brain, x=defaultStartX, y=defaultStartY, batch=None))
+            if i == 0:
+                brain = Brain(topBrainLayers)
+            else:
+                brain = Brain(self.initBrainMatrices(len(eyeParams) + 1))   
 
 
 
@@ -66,7 +69,7 @@ class Generation:
         print(f"Generation {self.number}'s top 10 fitness scores:")
         for i in range(10):
             print(i, self.cars[i].getFitness())
-        self.saveBrain(self.cars[0], "Top-Brain")
+        self.saveBrain(self.cars[0], "")
         top20 = self.cars[0:self.numCars//5]
         newParams = self.mixMutate([car.params       for car in top20])
         newEyes   = self.newEyes  ([car.eyeParams    for car in top20])
