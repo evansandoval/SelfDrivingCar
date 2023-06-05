@@ -44,7 +44,7 @@ class Generation:
 
 
 
-    def createGeneration(self, params, eyeParams, brainParams=None):
+    def populateGeneration(self, params, eyeParams, brainParams=None):
         self.number += 1
         self.cars = []
         for i in range(self.numCars):
@@ -66,7 +66,7 @@ class Generation:
         outputMatrix = np.random.uniform(-1, 1, (4, 8))
         return [inputMatrix, hiddenMatrix, outputMatrix]
     
-    def nextGeneration(self):
+    def createNextGeneration(self):
         self.sortByFitness()
         print(f"Generation {self.number}'s top 10 fitness scores:")
         for i in range(10):
@@ -77,7 +77,7 @@ class Generation:
         newEyes   = self.newEyes  ([car.eyeParams    for car in top20])
         # eyes need their own mix function to randomly mutate new eyes
         newBrains = self.newBrain(top20)
-        self.createGeneration(defaultParams, defaultEyeParams, newBrains)
+        self.populateGeneration(defaultParams, defaultEyeParams, newBrains)
         
     def saveBrain(self, car, titleString):
         for i in range(len(car.brain.layers)):

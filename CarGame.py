@@ -28,10 +28,15 @@ pixels = gateIm.load()
 gatesMatrix = np.zeros((1080,920))
 for x in range(1080):
     for y in range(920):      
-        if pixels[x,y] == 1:
+        if pixels[x,y] == 2: # if track1: == 1, if track2, == 2
             gatesMatrix[x][919-y] = 1 # 1 for when it represents a Gate
                                       # 0 otherwise
-gateObj = Gates.GatesTracker(gatesMatrix)
+GATE_TRACKER = Gates.GatesTracker(gatesMatrix)
+# (147, 326) for track 1
+# (156, 246) for track 2
+BACKWARD_GATE_X = 156
+BACKWARD_GATE_Y = 246
+
 
 ## PYGLET WINDOW SETUP
 windowX, windowY = 1080, 920 # track images should be 1080x920
@@ -71,6 +76,7 @@ class Car(PhysicalObject):
             self.x = car.x
             self.y = car.y
             self.line = shapes.Line(self.x, self.y, self.targetXY()[0], self.targetXY()[1], width=2, batch=eyeBatch)
+        
         def read(self):
             x, y = self.targetXY()
             if 0 < x < 1080 and 0 < y < 920 and boundsMatrix[x][y]:
@@ -134,9 +140,9 @@ class Car(PhysicalObject):
     
     def checkGates(self):
         x, y = int(self.x), int(self.y)
-        if gateObj.isGate(x, y):
+        if GATE_TRACKER.isGate(x, y):
             for gate in self.gatesVisited:
-                if gateObj.sameGateAs(gate[0], gate[1], x, y):
+                if GATE_TRACKER.sameGateAs(gate[0], gate[1], x, y):
                     return
             if len(self.gatesVisited) == 0:
                 self.gatesVisited[(x,y)] = self.timeAlive
@@ -239,10 +245,10 @@ class Car(PhysicalObject):
         if len(self.gatesVisited) == 0 and self.timeAlive > 5:
             # print("Car has not moved sufficient distance")
             self.kill()
-        # if len(self.gatesVisited) == 1 and any([gateObj.sameGateAs(x, y, 147, 326) for (x, y) in self.gatesVisited.keys()]):
-        #     #print("Going backwards")
-        #     self.kill()
-        #     self.getFitness = lambda : 0
+        if len(self.gatesVisited) == 1 and any([GATE_TRACKER.sameGateAs(x, y, BACKWARD_GATE_X, BACKWARD_GATE_Y) for (x, y) in self.gatesVisited.keys()]):
+            #print("Going backwards")
+            self.kill()
+            self.getFitness = lambda : 0
         if self.timeAlive > 45:
             # print('timeout')
             self.kill()
@@ -264,6 +270,11 @@ class Car(PhysicalObject):
         self.control['up'] = outputVector[1]
         self.control['right'] = outputVector[2]
         self.control['down'] = outputVector[3]
+
+    # PIXEL DEBUGGING
+    # def on_mouse_press(self, x, y, button, modifiers):
+    #     print(f"Is gate: {GATE_TRACKER.isGate(x, y)}")
+    #     print(f"Is start gate: {GATE_TRACKER.sameGateAs(x, y, BACKWARD_GATE_X, BACKWARD_GATE_Y)}")
 
     def update(self, dt):
         if self.dead:
@@ -297,7 +308,7 @@ def on_draw():
         eyeBatch.draw()
     
     if gen.isDead():
-        gen.nextGeneration()
+        gen.createNextGeneration()
 
 if __name__ == '__main__':
     pyglet.clock.schedule_interval(update, 1/120.0)
