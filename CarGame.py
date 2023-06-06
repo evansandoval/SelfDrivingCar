@@ -4,12 +4,8 @@ from pyglet.window import key
 from PIL import Image
 from Generations import Generation
 
-## Useful function
-def rotateByTheta(vx, vy, theta):
-    x = np.array([vx,vy])
-    R = np.array([[math.cos(theta), -math.sin(theta)], 
-                  [math.sin(theta), math.cos(theta)]])
-    return np.matmul(R, x)
+# To change from track 1 to track 2, replace all "track1" with "track2"
+# and modify BACKWARD_GATE variables on lines 40 and 41 as described
 
 ## TRACK IMAGE PROCESSING
 trackIm = Image.open('./images/track2.png') 
@@ -100,10 +96,10 @@ class Car(PhysicalObject):
         self.dead = False
         self.timeAlive = 0
         self.mu = .999 # FRICTION CONSTANT
-        self.rotation = -90
+        self.rotation = -90 
         self.startX, self.startY = self.x, self.y
         self.makeEyes(eyeParams)
-        self.params = np.array([setSpeed, setRotateSpeed])
+        self.carParams = np.array([setSpeed, setRotateSpeed])
         self.eyeParams = eyeParams
         self.control = dict(left=False, right=False, up=False, down=False)
         self.gatesVisited = {}
@@ -184,47 +180,33 @@ class Car(PhysicalObject):
             eye.y = self.y
             eye.updateLine()
 
-    def rotateEyes(self, theta, kill=False):
-        if kill:
-            for eye in self.eyes:
-                eye.rotation = self.rotation + eye.angle
-                eye.updateLine()
-        else: 
-            for eye in self.eyes:
-                eye.rotation += theta
-                eye.updateLine()
-
-    def turnLeft(self, dt):
-        theta0 = -math.radians(self.rotation)
-        self.rotation -= self.rotate_speed * dt
-        self.rotateEyes(-self.rotate_speed * dt)
-        thetaf = -math.radians(self.rotation)
-        dtheta = thetaf-theta0
-        newRotatedVector = rotateByTheta(self.velocity_x, self.velocity_y, dtheta)
-        self.velocity_x, self.velocity_y = newRotatedVector[0], newRotatedVector[1]
-
-    def turnRight(self, dt):  
-        theta0 = -math.radians(self.rotation)
-        self.rotation += self.rotate_speed * dt
-        self.rotateEyes(self.rotate_speed * dt)
-        thetaf = -math.radians(self.rotation)
-        dtheta = thetaf-theta0
-        newRotatedVector = rotateByTheta(self.velocity_x, self.velocity_y, dtheta)
-        self.velocity_x, self.velocity_y = newRotatedVector[0], newRotatedVector[1]
-
-    def forward(self, dt):
-        angle_radians = -math.radians(self.rotation)
-        force_x = math.cos(angle_radians) * self.speed * dt
-        force_y = math.sin(angle_radians) * self.speed * dt
-        self.velocity_x += force_x
-        self.velocity_y += force_y
+    def rotateEyes(self, theta):
+        for eye in self.eyes:
+            eye.rotation += theta
+            eye.updateLine()
     
-    def backward(self, dt):
+    # direction = -1 if left, 1 if right
+    def turn(self, dt, direction):
+        def rotateByTheta(vx, vy, theta):
+            x = np.array([vx,vy])
+            R = np.array([[math.cos(theta), -math.sin(theta)], 
+                          [math.sin(theta), math.cos(theta)]])
+            return np.matmul(R, x)
+        theta0 = -math.radians(self.rotation)
+        self.rotation += direction * self.rotate_speed * dt
+        self.rotateEyes(direction * self.rotate_speed * dt)
+        thetaf = -math.radians(self.rotation)
+        dtheta = thetaf-theta0
+        newRotatedVector = rotateByTheta(self.velocity_x, self.velocity_y, dtheta)
+        self.velocity_x, self.velocity_y = newRotatedVector[0], newRotatedVector[1]
+
+    # direction = 1 if forward, -1 if backward 
+    def drive(self, dt, direction):
         angle_radians = -math.radians(self.rotation)
         force_x = math.cos(angle_radians) * self.speed * dt
         force_y = math.sin(angle_radians) * self.speed * dt
-        self.velocity_x -= force_x
-        self.velocity_y -= force_y
+        self.velocity_x += direction * force_x
+        self.velocity_y += direction * force_y
         
     def readEyes(self):
         vector = []
@@ -255,13 +237,13 @@ class Car(PhysicalObject):
 
     def moveCar(self, dt):
         if self.control['left']:
-            self.turnLeft(dt)
+            self.turn(dt, -1)
         if self.control['right']:
-            self.turnRight(dt)
+            self.turn(dt, 1)
         if self.control['up']:
-            self.forward(dt)
+            self.drive(dt, 1)
         if self.control['down']:
-            self.backward(dt)
+            self.drive(dt, -1)
 
     def processBrain(self):
         inputVector = self.readEyes()

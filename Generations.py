@@ -2,15 +2,15 @@ import numpy as np
 from Brain import Brain
 
 # DEFAULT PARAMETERS
-defaultStartX = 123
-defaultStartY = 300
-defaultSpeed = 60.0
-defaultTurnRadius = 100.0
-# defaultEyes = 3 # maybe even make this an input
-defaultEyeParams = [(100,-45), (100, 45)]
+DEFAULT_START_X = 123
+DEFAULT_START_Y = 300
+DEFAULT_SPEED = 60.0
+DEFAULT_TURN_RADIUS = 100.0
+# DEFAULT_EYES = 3 # maybe even make this an input
+DEFAULT_EYE_PARAMS = [(100,-45), (100, 45)]
 
-defaultParams = np.array([defaultSpeed, defaultTurnRadius])
-topBrainLayers = [np.loadtxt("BestBrain/layer-0.csv"), np.loadtxt("BestBrain/layer-1.csv"), np.loadtxt("BestBrain/layer-2.csv")]
+DEFAULT_CAR_PARAMS = np.array([DEFAULT_SPEED, DEFAULT_TURN_RADIUS])
+TOP_BRAIN_LAYERS = [np.loadtxt("BestBrain/layer-0.csv"), np.loadtxt("BestBrain/layer-1.csv"), np.loadtxt("BestBrain/layer-2.csv")]
 
 # INPUTS
 # leftEye = 0 or 1 (inbounds or not inbounds)
@@ -26,32 +26,32 @@ topBrainLayers = [np.loadtxt("BestBrain/layer-0.csv"), np.loadtxt("BestBrain/lay
 # right = 0 or 1
 
 class Generation:
-    def __init__(self, CarConstructor, numCars, params=defaultParams, eyeParams=defaultEyeParams, showEyes=True):
+    def __init__(self, CarConstructor, numCars, carParams=DEFAULT_CAR_PARAMS, eyeParams=DEFAULT_EYE_PARAMS, showEyes=True):
         self.number = 1
         self.showEyes = showEyes
         self.numCars = numCars
         self.Car = CarConstructor
         self.cars = []
         for i in range(numCars):
-            speed = params[0]
-            turnRadius = params[1]
+            speed = carParams[0]
+            turnRadius = carParams[1]
             if i < 20: #inject 20 ideal cars
-                brain = Brain(topBrainLayers)
+                brain = Brain(TOP_BRAIN_LAYERS)
             else:
                 brain = Brain(self.initBrainMatrices(len(eyeParams)))   
-            self.cars.append(self.Car(speed, turnRadius, eyeParams, brain, x=defaultStartX, y=defaultStartY, batch=None))
+            self.cars.append(self.Car(speed, turnRadius, eyeParams, brain, x=DEFAULT_START_X, y=DEFAULT_START_Y, batch=None))
 
 
 
 
-    def populateGeneration(self, params, eyeParams, brainParams=None):
+    def populateGeneration(self, carParams, eyeParams, brainParams=None):
         self.number += 1
         self.cars = []
         for i in range(self.numCars):
-            speed = params[0]
-            turnRadius = params[1]
+            speed = carParams[0]
+            turnRadius = carParams[1]
             brain = Brain(brainParams[i])     
-            self.cars.append(self.Car(speed, turnRadius, eyeParams, brain, x=defaultStartX, y=defaultStartY, batch=None))
+            self.cars.append(self.Car(speed, turnRadius, eyeParams, brain, x=DEFAULT_START_X, y=DEFAULT_START_Y, batch=None))
 
 
         
@@ -73,11 +73,11 @@ class Generation:
             print(i, self.cars[i].getFitness())
         self.saveBrain(self.cars[0], "")
         top20 = self.cars[0:self.numCars//5]
-        newParams = self.mixMutate([car.params       for car in top20])
+        newParams = self.mixMutate([car.carParams       for car in top20])
         newEyes   = self.newEyes  ([car.eyeParams    for car in top20])
         # eyes need their own mix function to randomly mutate new eyes
         newBrains = self.newBrain(top20)
-        self.populateGeneration(defaultParams, defaultEyeParams, newBrains)
+        self.populateGeneration(DEFAULT_CAR_PARAMS, DEFAULT_EYE_PARAMS, newBrains)
         
     def saveBrain(self, car, titleString):
         for i in range(len(car.brain.layers)):
