@@ -2,9 +2,10 @@ import numpy as np
 from Brain import Brain
 
 # DEFAULT PARAMETERS
-# 
-DEFAULT_START_X = 123
-DEFAULT_START_Y = 300
+# Start is (150, 415) for track 1,
+#          (123, 300) for track 2
+DEFAULT_START_X = 150
+DEFAULT_START_Y = 415
 DEFAULT_SPEED = 60.0
 DEFAULT_TURN_RADIUS = 100.0
 # DEFAULT_EYES = 3 # maybe even make this an input
@@ -33,6 +34,7 @@ class Generation:
         self.numCars = numCars
         self.Car = CarConstructor
         self.cars = []
+        self.maxFitness = 832
         for i in range(numCars):
             speed = carParams[0]
             turnRadius = carParams[1]
@@ -72,7 +74,9 @@ class Generation:
         print(f"Generation {self.number}'s top 10 fitness scores:")
         for i in range(10):
             print(i, self.cars[i].getFitness())
-        self.saveBrain(self.cars[0], "")
+        if self.cars[0].getFitness() > self.maxFitness:
+            self.maxFitness = self.cars[0].getFitness()
+            self.saveBrain(self.cars[0], "")
         top20 = self.cars[0:self.numCars//5]
         newParams = self.mixMutate([car.carParams       for car in top20])
         newEyes   = self.newEyes  ([car.eyeParams    for car in top20])
