@@ -1,4 +1,5 @@
 import numpy as np
+import os
 from Brain import Brain
 
 # DEFAULT PARAMETERS
@@ -12,7 +13,7 @@ DEFAULT_TURN_RADIUS = 100.0
 DEFAULT_EYE_PARAMS = [(100,-45), (100, 45)]
 
 DEFAULT_CAR_PARAMS = np.array([DEFAULT_SPEED, DEFAULT_TURN_RADIUS])
-TOP_BRAIN_LAYERS = [np.loadtxt("BestBrain/layer-0.csv"), np.loadtxt("BestBrain/layer-1.csv"), np.loadtxt("BestBrain/layer-2.csv")]
+TOP_BRAIN_LAYERS = [np.loadtxt("InjectedBrain/layer-0.csv"), np.loadtxt("InjectedBrain/layer-1.csv"), np.loadtxt("InjectedBrain/layer-2.csv")]
 
 # INPUTS
 # leftEye = 0 or 1 (inbounds or not inbounds)
@@ -74,9 +75,7 @@ class Generation:
         print(f"Generation {self.number}'s top 10 fitness scores:")
         for i in range(10):
             print(i, self.cars[i].getFitness())
-        if self.cars[0].getFitness() > self.maxFitness:
-            self.maxFitness = self.cars[0].getFitness()
-            self.saveBrain(self.cars[0], "")
+        self.saveBrain(self.cars[0])
         top20 = self.cars[0:self.numCars//5]
         newParams = self.mixMutate([car.carParams       for car in top20])
         newEyes   = self.newEyes  ([car.eyeParams    for car in top20])
@@ -84,9 +83,11 @@ class Generation:
         newBrains = self.newBrain(top20)
         self.populateGeneration(DEFAULT_CAR_PARAMS, DEFAULT_EYE_PARAMS, newBrains)
         
-    def saveBrain(self, car, titleString):
+    def saveBrain(self, car):
+        if not os.path.exists(f"Saved-Brains/F{car.getFitness() // 1}-G{self.number}/"):
+            os.makedirs(f"Saved-Brains/F{int(car.getFitness())}-G{self.number}/")
         for i in range(len(car.brain.layers)):
-            np.savetxt("Saved-Brains/" + titleString + "layer-" + str(i) + ".csv", self.cars[0].brain.layers[i])
+            np.savetxt(f"Saved-Brains/F{int(car.getFitness())}-G{self.number}/layer-{i}.csv", car.brain.layers[i])
 
     
     def newBrain(self, top20):
