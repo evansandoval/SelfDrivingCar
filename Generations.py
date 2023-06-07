@@ -2,6 +2,7 @@ import numpy as np
 from Brain import Brain
 
 # DEFAULT PARAMETERS
+# 
 DEFAULT_START_X = 123
 DEFAULT_START_Y = 300
 DEFAULT_SPEED = 60.0

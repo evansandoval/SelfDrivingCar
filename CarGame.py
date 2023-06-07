@@ -5,10 +5,11 @@ from PIL import Image
 from Generations import Generation
 
 # To change from track 1 to track 2, replace all "track1" with "track2"
-# and modify BACKWARD_GATE variables on lines 40 and 41 as described
+# and modify BACKWARD_GATE variables on lines 34 and 35 as described
+# Also, change the gate detection condition on ine 28 and STARTX/STARTY in Generations.py
 
 ## TRACK IMAGE PROCESSING
-trackIm = Image.open('./images/track2.png') 
+trackIm = Image.open('./images/track1.png') 
 pixels = trackIm.load()
 boundsMatrix = np.zeros((1080, 920))
 for x in range(1080):
@@ -19,19 +20,19 @@ for x in range(1080):
 
 
 ## GATE IMAGE PROCESSING
-gateIm = Image.open("./images/track2gates.png")
+gateIm = Image.open("./images/track1gates.png")
 pixels = gateIm.load()
 gatesMatrix = np.zeros((1080,920))
 for x in range(1080):
     for y in range(920):      
-        if pixels[x,y] == 2: # if track1: == 1, if track2, == 2
+        if pixels[x,y] == 1: # if track1: == 1, if track2, == 2
             gatesMatrix[x][919-y] = 1 # 1 for when it represents a Gate
                                       # 0 otherwise
 GATE_TRACKER = Gates.GatesTracker(gatesMatrix)
 # (147, 326) for track 1
 # (156, 246) for track 2
-BACKWARD_GATE_X = 156
-BACKWARD_GATE_Y = 246
+BACKWARD_GATE_X = 147
+BACKWARD_GATE_Y = 326
 
 
 ## PYGLET WINDOW SETUP
@@ -46,7 +47,7 @@ carFile = pyglet.resource.image("car.png")
 carFile.anchor_x, carFile.anchor_y  = carFile.width // 2, carFile.height // 2 
 lineFile = pyglet.resource.image("line.png")
 lineFile.anchor_x, lineFile.anchor_y  = 0 , lineFile.height // 2
-trackFile= pyglet.resource.image("track2gates.png")
+trackFile= pyglet.resource.image("track1gates.png")
 trackImage = pyglet.sprite.Sprite(img=trackFile)
 
 # PYGLET OBJECTS
