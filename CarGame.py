@@ -4,19 +4,16 @@ from pyglet.window import key
 from PIL import Image
 from Generations import Generation
 
-# To change from track 1 to track 2, replace all "track1" with "track2"
-# and modify BACKWARD_GATE variables on lines 34 and 35 as described
-# Also, change the gate detection condition on ine 28 and STARTX/STARTY in Generations.py
-TRACK_SELECTION = 1
+TRACK_SELECTION = 2
 match TRACK_SELECTION:
     case 1:
-        gateVariable = 1
+        GATE_VARIABLE = 1
         BACKWARD_GATE_X = 147
         BACKWARD_GATE_Y = 326
         DEFAULT_START_X = 150
         DEFAULT_START_Y = 415
     case 2:
-        gateVariable = 2
+        GATE_VARIABLE = 2
         BACKWARD_GATE_X = 156
         BACKWARD_GATE_Y = 246
         DEFAULT_START_X = 123
@@ -38,7 +35,7 @@ pixels = gateIm.load()
 gatesMatrix = np.zeros((1080,920))
 for x in range(1080):
     for y in range(920):      
-        if pixels[x,y] == gateVariable:
+        if pixels[x,y] == GATE_VARIABLE:
             gatesMatrix[x][919-y] = 1 # 1 for when it represents a Gate
                                       # 0 otherwise
 GATE_TRACKER = Gates.GatesTracker(gatesMatrix)
