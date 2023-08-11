@@ -1,9 +1,9 @@
-import pyglet, math, Gates, numpy as np
+import pyglet, math, numpy as np
+import Tracks
 from pyglet import shapes
 from pyglet.window import key
-from PIL import Image
 from Generations import Generation
-from TrackObject import TrackObject
+
 
 ## PYGLET WINDOW SETUP
 windowX, windowY = 1080, 920 # track images should be 1080x920
@@ -33,50 +33,7 @@ eyeBatch = pyglet.graphics.Batch()
 # TRACK OBJECT SETUP
 TRACK_OBJECTS = {}
 for trackNumber in range(1, 3):
-    trackObj = TrackObject()
-    trackObj.TRACK_NUMBER = trackNumber
-    match trackNumber:
-        case 1:
-            trackObj.GATE_VARIABLE = 1
-            trackObj.BACKWARD_GATE_X = 147
-            trackObj.BACKWARD_GATE_Y = 326
-            trackObj.DEFAULT_START_X = 150
-            trackObj.DEFAULT_START_Y = 415
-        case 2:
-            trackObj.GATE_VARIABLE = 2
-            trackObj.BACKWARD_GATE_X = 824
-            trackObj.BACKWARD_GATE_Y = 436
-            trackObj.DEFAULT_START_X = 804
-            trackObj.DEFAULT_START_Y = 458
-
-    ## CREATE BOUNDS MATRIX
-    trackIm = Image.open(f"./images/track{trackNumber}.png") 
-    pixels = trackIm.load()
-    boundsMatrix = np.zeros((1080, 920))
-    for x in range(1080):
-        for y in range(920):
-            if(pixels[x,y] == 0):
-                boundsMatrix[x][919-y] = 1 ## 1 for when it's in bounds
-                                           ## 0 for when it's out of bounds
-    trackObj.BOUNDS = boundsMatrix
-
-    ## CREATE GATE OBJECT
-    gateIm = Image.open(f"./images/track{trackNumber}gates.png")
-    pixels = gateIm.load()
-    gatesMatrix = np.zeros((1080,920))
-    for x in range(1080):
-        for y in range(920):      
-            if pixels[x,y] == trackObj.GATE_VARIABLE:
-                gatesMatrix[x][919-y] = 1 # 1 for when it represents a Gate
-                                          # 0 otherwise
-    trackObj.GATE_TRACKER = Gates.GatesTracker(gatesMatrix)
-
-    
-
-    trackFile = pyglet.resource.image(f"track{trackNumber}gates.png")
-    trackObj.trackImage = pyglet.sprite.Sprite(img=trackFile)
-    TRACK_OBJECTS[trackNumber] = trackObj
-
+    TRACK_OBJECTS[trackNumber] = Tracks.createTrackObj(trackNumber)
 
 # Select starting track
 currTrack = TRACK_OBJECTS[1]
