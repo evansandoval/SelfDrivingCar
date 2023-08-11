@@ -7,9 +7,23 @@ from Generations import Generation
 # To change from track 1 to track 2, replace all "track1" with "track2"
 # and modify BACKWARD_GATE variables on lines 34 and 35 as described
 # Also, change the gate detection condition on ine 28 and STARTX/STARTY in Generations.py
+TRACK_SELECTION = 1
+match TRACK_SELECTION:
+    case 1:
+        gateVariable = 1
+        BACKWARD_GATE_X = 147
+        BACKWARD_GATE_Y = 326
+        DEFAULT_START_X = 150
+        DEFAULT_START_Y = 415
+    case 2:
+        gateVariable = 2
+        BACKWARD_GATE_X = 156
+        BACKWARD_GATE_Y = 246
+        DEFAULT_START_X = 123
+        DEFAULT_START_Y = 300
 
 ## TRACK IMAGE PROCESSING
-trackIm = Image.open('./images/track1.png') 
+trackIm = Image.open(f"./images/track{TRACK_SELECTION}.png") 
 pixels = trackIm.load()
 boundsMatrix = np.zeros((1080, 920))
 for x in range(1080):
@@ -18,21 +32,16 @@ for x in range(1080):
             boundsMatrix[x][919-y] = 1 ## 1 for when it's in bounds
                                        ## 0 for when it's out of bounds
 
-
 ## GATE IMAGE PROCESSING
-gateIm = Image.open("./images/track1gates.png")
+gateIm = Image.open(f"./images/track{TRACK_SELECTION}gates.png")
 pixels = gateIm.load()
 gatesMatrix = np.zeros((1080,920))
 for x in range(1080):
     for y in range(920):      
-        if pixels[x,y] == 1: # if track1: == 1, if track2, == 2
+        if pixels[x,y] == gateVariable:
             gatesMatrix[x][919-y] = 1 # 1 for when it represents a Gate
                                       # 0 otherwise
 GATE_TRACKER = Gates.GatesTracker(gatesMatrix)
-# (147, 326) for track 1
-# (156, 246) for track 2
-BACKWARD_GATE_X = 147
-BACKWARD_GATE_Y = 326
 
 
 ## PYGLET WINDOW SETUP
@@ -47,7 +56,7 @@ carFile = pyglet.resource.image("car.png")
 carFile.anchor_x, carFile.anchor_y  = carFile.width // 2, carFile.height // 2 
 lineFile = pyglet.resource.image("line.png")
 lineFile.anchor_x, lineFile.anchor_y  = 0 , lineFile.height // 2
-trackFile= pyglet.resource.image("track1gates.png")
+trackFile= pyglet.resource.image(f"track{TRACK_SELECTION}gates.png")
 trackImage = pyglet.sprite.Sprite(img=trackFile)
 
 # PYGLET OBJECTS
@@ -98,7 +107,7 @@ class Car(PhysicalObject):
         self.timeAlive = 0
         self.FRICTION_CONSTANT = .99 
         self.rotation = -90 
-        self.startX, self.startY = self.x, self.y
+        self.startX, self.startY = DEFAULT_START_X, DEFAULT_START_Y
         self.makeEyes(eyeParams)
         self.carParams = np.array([setSpeed, setRotateSpeed])
         self.eyeParams = eyeParams
@@ -225,7 +234,7 @@ class Car(PhysicalObject):
     def getFitness(self):
         numGates = len(self.savedGateTimes)
         # Phase I Fitness Function
-        if numGates < 25: 
+        if numGates < 20: 
             return numGates
         # Phase II Fitness Function 
         else:
@@ -280,7 +289,7 @@ class Car(PhysicalObject):
         self.moveCar(dt)
         self.checkStopConditions()
 
-gen = Generation(Car, 100, showEyes=False)
+gen = Generation(Car, 100, DEFAULT_START_X, DEFAULT_START_Y, showEyes=False)
 # Universal update function by pyglet
 def update(dt):
     for obj in gen.cars:
