@@ -3,58 +3,20 @@ from pyglet import shapes
 from pyglet.window import key
 from PIL import Image
 from Generations import Generation
-
-TRACK_SELECTION = 2
-match TRACK_SELECTION:
-    case 1:
-        GATE_VARIABLE = 1
-        BACKWARD_GATE_X = 147
-        BACKWARD_GATE_Y = 326
-        DEFAULT_START_X = 150
-        DEFAULT_START_Y = 415
-    case 2:
-        GATE_VARIABLE = 2
-        BACKWARD_GATE_X = 824
-        BACKWARD_GATE_Y = 436
-        DEFAULT_START_X = 804
-        DEFAULT_START_Y = 458
-
-## TRACK IMAGE PROCESSING
-trackIm = Image.open(f"./images/track{TRACK_SELECTION}.png") 
-pixels = trackIm.load()
-boundsMatrix = np.zeros((1080, 920))
-for x in range(1080):
-    for y in range(920):
-        if(pixels[x,y] == 0):
-            boundsMatrix[x][919-y] = 1 ## 1 for when it's in bounds
-                                       ## 0 for when it's out of bounds
-
-## GATE IMAGE PROCESSING
-gateIm = Image.open(f"./images/track{TRACK_SELECTION}gates.png")
-pixels = gateIm.load()
-gatesMatrix = np.zeros((1080,920))
-for x in range(1080):
-    for y in range(920):      
-        if pixels[x,y] == GATE_VARIABLE:
-            gatesMatrix[x][919-y] = 1 # 1 for when it represents a Gate
-                                      # 0 otherwise
-GATE_TRACKER = Gates.GatesTracker(gatesMatrix)
-
+from TrackObject import TrackObject
 
 ## PYGLET WINDOW SETUP
 windowX, windowY = 1080, 920 # track images should be 1080x920
 window = pyglet.window.Window(windowX, windowY)
 
+
 # PYGLET IMAGE SETUP
 pyglet.resource.path = ['images']
 pyglet.resource.reindex()
-
 carFile = pyglet.resource.image("car.png")
 carFile.anchor_x, carFile.anchor_y  = carFile.width // 2, carFile.height // 2 
 lineFile = pyglet.resource.image("line.png")
 lineFile.anchor_x, lineFile.anchor_y  = 0 , lineFile.height // 2
-trackFile= pyglet.resource.image(f"track{TRACK_SELECTION}gates.png")
-trackImage = pyglet.sprite.Sprite(img=trackFile)
 
 # PYGLET OBJECTS
 class PhysicalObject(pyglet.sprite.Sprite):
@@ -67,6 +29,60 @@ class PhysicalObject(pyglet.sprite.Sprite):
         self.x += self.velocity_x * dt
         self.y += self.velocity_y * dt
 eyeBatch = pyglet.graphics.Batch()
+
+# TRACK OBJECT SETUP
+TRACK_OBJECTS = {}
+for trackNumber in range(1, 3):
+    trackObj = TrackObject()
+    trackObj.TRACK_NUMBER = trackNumber
+    match trackNumber:
+        case 1:
+            trackObj.GATE_VARIABLE = 1
+            trackObj.BACKWARD_GATE_X = 147
+            trackObj.BACKWARD_GATE_Y = 326
+            trackObj.DEFAULT_START_X = 150
+            trackObj.DEFAULT_START_Y = 415
+        case 2:
+            trackObj.GATE_VARIABLE = 2
+            trackObj.BACKWARD_GATE_X = 824
+            trackObj.BACKWARD_GATE_Y = 436
+            trackObj.DEFAULT_START_X = 804
+            trackObj.DEFAULT_START_Y = 458
+
+    ## CREATE BOUNDS MATRIX
+    trackIm = Image.open(f"./images/track{trackNumber}.png") 
+    pixels = trackIm.load()
+    boundsMatrix = np.zeros((1080, 920))
+    for x in range(1080):
+        for y in range(920):
+            if(pixels[x,y] == 0):
+                boundsMatrix[x][919-y] = 1 ## 1 for when it's in bounds
+                                           ## 0 for when it's out of bounds
+    trackObj.BOUNDS = boundsMatrix
+
+    ## CREATE GATE OBJECT
+    gateIm = Image.open(f"./images/track{trackNumber}gates.png")
+    pixels = gateIm.load()
+    gatesMatrix = np.zeros((1080,920))
+    for x in range(1080):
+        for y in range(920):      
+            if pixels[x,y] == trackObj.GATE_VARIABLE:
+                gatesMatrix[x][919-y] = 1 # 1 for when it represents a Gate
+                                          # 0 otherwise
+    trackObj.GATE_TRACKER = Gates.GatesTracker(gatesMatrix)
+
+    
+
+    trackFile = pyglet.resource.image(f"track{trackNumber}gates.png")
+    trackObj.trackImage = pyglet.sprite.Sprite(img=trackFile)
+    TRACK_OBJECTS[trackNumber] = trackObj
+
+
+# Select starting track
+currTrack = TRACK_OBJECTS[1]
+def incrementTrack(currGen):
+    global currTrack
+    currTrack = TRACK_OBJECTS[1 + currGen % 2]
 
 # CAR CLASS
 class Car(PhysicalObject):
@@ -82,7 +98,7 @@ class Car(PhysicalObject):
         
         def read(self):
             x, y = self.targetXY()
-            if 0 < x < 1080 and 0 < y < 920 and boundsMatrix[x][y]:
+            if 0 < x < 1080 and 0 < y < 920 and currTrack.BOUNDS[x][y]:
                 return 1
             return 0
 
@@ -104,7 +120,7 @@ class Car(PhysicalObject):
         self.timeAlive = 0
         self.FRICTION_CONSTANT = .99 
         self.rotation = -90 
-        self.startX, self.startY = DEFAULT_START_X, DEFAULT_START_Y
+        self.startX, self.startY = currTrack.DEFAULT_START_X, currTrack.DEFAULT_START_Y
         self.makeEyes(eyeParams)
         self.carParams = np.array([setSpeed, setRotateSpeed])
         self.eyeParams = eyeParams
@@ -168,7 +184,7 @@ class Car(PhysicalObject):
         # self.timeAlive = 0
     
     def checkBounds(self):
-        if not (0 < self.x < 1080) or not (0 < self.y < 920) or boundsMatrix[int(self.x)][int(self.y)]:
+        if not (0 < self.x < 1080) or not (0 < self.y < 920) or currTrack.BOUNDS[int(self.x)][int(self.y)]:
             self.kill()
 
     def moveEyes(self):
@@ -213,11 +229,11 @@ class Car(PhysicalObject):
     
     def checkGates(self):
         x, y = int(self.x), int(self.y)
-        if GATE_TRACKER.isGate(x, y):
+        if currTrack.GATE_TRACKER.isGate(x, y):
             # PHASE 1
             if len(self.gatesVisited) < 20:
                 for gate in self.gatesVisited:
-                    if GATE_TRACKER.isSameGate(gate[0], gate[1], x, y):
+                    if currTrack.GATE_TRACKER.isSameGate(gate[0], gate[1], x, y):
                         return
                 self.gatesVisited.add((x,y))
                 if len(self.savedGateTimes) == 0:
@@ -242,10 +258,12 @@ class Car(PhysicalObject):
         if len(self.savedGateTimes) == 0 and self.timeAlive > 5:
             # print("Car has not moved sufficient distance")
             self.kill()
-        if len(self.savedGateTimes) == 1 and any([GATE_TRACKER.isSameGate(x, y, BACKWARD_GATE_X, BACKWARD_GATE_Y) for (x, y) in self.gatesVisited]):
-            #print("Going backwards")
-            self.kill()
-            self.getFitness = lambda : 0
+        if len(self.savedGateTimes) == 1: 
+            x1, y1 = list(self.gatesVisited)[0]
+            if currTrack.GATE_TRACKER.isSameGate(x1, y1, currTrack.BACKWARD_GATE_X, currTrack.BACKWARD_GATE_Y):
+                #print("Going backwards")
+                self.kill()
+                self.getFitness = lambda : 0
         if self.timeAlive > 45:
             # print('timeout')
             self.kill()
@@ -271,8 +289,8 @@ class Car(PhysicalObject):
     # PIXEL DEBUGGING
     # def on_mouse_press(self, x, y, button, modifiers):
     #     print(f"Coords: {(x,y)}")
-    #     print(f"Is gate: {GATE_TRACKER.isGate(x, y)}")
-    #     print(f"Is start gate: {GATE_TRACKER.isSameGate(x, y, BACKWARD_GATE_X, BACKWARD_GATE_Y)}")
+    #     print(f"Is gate: {currTrack.GATE_TRACKER.isGate(x, y)}")
+    #     print(f"Is start gate: {currTrack.GATE_TRACKER.isSameGate(x, y, currTrack.BACKWARD_GATE_X, currTrack.BACKWARD_GATE_Y)}")
 
     def update(self, dt):
         if self.dead:
@@ -287,25 +305,30 @@ class Car(PhysicalObject):
         self.moveCar(dt)
         self.checkStopConditions()
 
-gen = Generation(Car, 100, DEFAULT_START_X, DEFAULT_START_Y, showEyes=False)
+gen = Generation(Car, 100, currTrack.DEFAULT_START_X, currTrack.DEFAULT_START_Y, showEyes=False)
 # Universal update function by pyglet
 def update(dt):
     for obj in gen.cars:
         obj.update(dt)
+
 for obj in gen.cars:
     window.push_handlers(obj)
 
 @window.event
 def on_draw():
     window.clear()
-    trackImage.draw()
+    currTrack.trackImage.draw()
 
     for obj in gen.cars:
         obj.draw()
     if gen.showEyes:
         eyeBatch.draw()
-    
+
+
     if gen.isDead():
+        incrementTrack(gen.number)
+
+        # MODIFY CREATE NEXT GENERATION TO CHANGE THE STARTX AND STARTY VALUES
         gen.createNextGeneration()
 
 if __name__ == '__main__':
