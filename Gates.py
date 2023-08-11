@@ -35,7 +35,7 @@ class GatesTracker:
     def count(self):
         return self.wqu.count
     
-    def sameGateAs(self, x1, y1, x2, y2):
+    def isSameGate(self, x1, y1, x2, y2):       
         point1 = int(x1 + y1*1080)
         point2 = int(x2 + y2*1080)
         return self.wqu.connected(point1, point2)

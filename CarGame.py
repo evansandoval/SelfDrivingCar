@@ -96,14 +96,15 @@ class Car(PhysicalObject):
         self.rotate_speed = setRotateSpeed
         self.dead = False
         self.timeAlive = 0
-        self.mu = .999 # FRICTION CONSTANT
+        self.FRICTION_CONSTANT = .99 
         self.rotation = -90 
         self.startX, self.startY = self.x, self.y
         self.makeEyes(eyeParams)
         self.carParams = np.array([setSpeed, setRotateSpeed])
         self.eyeParams = eyeParams
         self.control = dict(left=False, right=False, up=False, down=False)
-        self.gatesVisited = {}
+        self.gatesVisited = set()
+        self.savedGateTimes = []
         self.lap = 0
         self.control = {'up': 0, 'left': 0, 'down': 0, 'right': 0, 'endsim': 0}
         self.brain = brain
@@ -137,8 +138,8 @@ class Car(PhysicalObject):
         return np.linalg.norm(np.array([self.velocity_x, self.velocity_y])) 
 
     def friction(self):
-        self.velocity_x *= self.mu
-        self.velocity_y *= self.mu
+        self.velocity_x *= self.FRICTION_CONSTANT
+        self.velocity_y *= self.FRICTION_CONSTANT
         if all([not v for v in self.control.values()]) and self.magnitudeVelocity() < 45:
             self.velocity_x = 0
             self.velocity_y = 0
@@ -210,40 +211,32 @@ class Car(PhysicalObject):
             # PHASE 1
             if len(self.gatesVisited) < 20:
                 for gate in self.gatesVisited:
-                    if GATE_TRACKER.sameGateAs(gate[0], gate[1], x, y):
+                    if GATE_TRACKER.isSameGate(gate[0], gate[1], x, y):
                         return
-                if len(self.gatesVisited) == 0:
-                    self.gatesVisited[(x,y)] = self.timeAlive
-                    self.lastGate = (x,y)  
+                self.gatesVisited.add((x,y))
+                if len(self.savedGateTimes) == 0:
+                    self.savedGateTimes.append(self.timeAlive)  
                 else:
-                    self.gatesVisited[(x,y)] = self.timeAlive - self.gatesVisited[self.lastGate]
+                    currentGateTime = self.timeAlive - self.savedGateTimes[-1] 
+                    self.savedGateTimes.append(currentGateTime)
             # PHASE 2
             if len(self.gatesVisited) == 20:
-                self.lap += 1
-                self.gatesVisited = {}
-
-    '''
-    TODO:
-    Figure out how to handle lap completions to reward faster cars
-    Might need a new way to measure speed around the track because 
-    it gets buggy when we go through the last gate and reset our visited
-    dictionary. Maybe we can use a queue that fills up to 19 so that we're
-    constantly chasing an "unvisited" gate
-    '''
+                self.gatesVisited = set()
     def getFitness(self):
-        numGates = len(self.gatesVisited) + (self.lap * 20)
-        if numGates == 0: # avoid divide by zero error
-            return 0
-        averageGateTime = sum(self.gatesVisited.values()) / numGates
-        if self.lap:
+        numGates = len(self.savedGateTimes)
+        # Phase I Fitness Function
+        if numGates < 25: 
+            return numGates
+        # Phase II Fitness Function 
+        else:
+            averageGateTime = sum(self.savedGateTimes) / numGates
             return numGates**3 / averageGateTime # averageGateTime is currently equal to zero
-        else: return numGates
 
     def checkStopConditions(self):
-        if len(self.gatesVisited) == 0 and self.timeAlive > 5:
+        if len(self.savedGateTimes) == 0 and self.timeAlive > 5:
             # print("Car has not moved sufficient distance")
             self.kill()
-        if self.lap == 0 and len(self.gatesVisited) == 1 and any([GATE_TRACKER.sameGateAs(x, y, BACKWARD_GATE_X, BACKWARD_GATE_Y) for (x, y) in self.gatesVisited.keys()]):
+        if len(self.savedGateTimes) == 1 and any([GATE_TRACKER.isSameGate(x, y, BACKWARD_GATE_X, BACKWARD_GATE_Y) for (x, y) in self.gatesVisited]):
             #print("Going backwards")
             self.kill()
             self.getFitness = lambda : 0
