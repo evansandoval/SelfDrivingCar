@@ -104,6 +104,7 @@ class Car(PhysicalObject):
         self.eyeParams = eyeParams
         self.control = dict(left=False, right=False, up=False, down=False)
         self.gatesVisited = {}
+        self.lap = 0
         self.control = {'up': 0, 'left': 0, 'down': 0, 'right': 0, 'endsim': 0}
         self.brain = brain
 
@@ -134,18 +135,6 @@ class Car(PhysicalObject):
 
     def magnitudeVelocity(self):
         return np.linalg.norm(np.array([self.velocity_x, self.velocity_y])) 
-    
-    def checkGates(self):
-        x, y = int(self.x), int(self.y)
-        if GATE_TRACKER.isGate(x, y):
-            for gate in self.gatesVisited:
-                if GATE_TRACKER.sameGateAs(gate[0], gate[1], x, y):
-                    return
-            if len(self.gatesVisited) == 0:
-                self.gatesVisited[(x,y)] = self.timeAlive
-                self.lastGate = (x,y)  
-            else:
-                self.gatesVisited[(x,y)] = self.timeAlive - self.gatesVisited[self.lastGate]
 
     def friction(self):
         self.velocity_x *= self.mu
@@ -214,21 +203,47 @@ class Car(PhysicalObject):
         for eye in self.eyes:
             vector.append(eye.read())
         return vector
+    
+    def checkGates(self):
+        x, y = int(self.x), int(self.y)
+        if GATE_TRACKER.isGate(x, y):
+            # PHASE 1
+            if len(self.gatesVisited) < 20:
+                for gate in self.gatesVisited:
+                    if GATE_TRACKER.sameGateAs(gate[0], gate[1], x, y):
+                        return
+                if len(self.gatesVisited) == 0:
+                    self.gatesVisited[(x,y)] = self.timeAlive
+                    self.lastGate = (x,y)  
+                else:
+                    self.gatesVisited[(x,y)] = self.timeAlive - self.gatesVisited[self.lastGate]
+            # PHASE 2
+            if len(self.gatesVisited) == 20:
+                self.lap += 1
+                self.gatesVisited = {}
 
+    '''
+    TODO:
+    Figure out how to handle lap completions to reward faster cars
+    Might need a new way to measure speed around the track because 
+    it gets buggy when we go through the last gate and reset our visited
+    dictionary. Maybe we can use a queue that fills up to 19 so that we're
+    constantly chasing an "unvisited" gate
+    '''
     def getFitness(self):
-        if len(self.gatesVisited) == 0:
+        numGates = len(self.gatesVisited) + (self.lap * 20)
+        if numGates == 0: # avoid divide by zero error
             return 0
-        numGates = len(self.gatesVisited)
         averageGateTime = sum(self.gatesVisited.values()) / numGates
-        if numGates == 20:
-            return numGates**3 / averageGateTime
+        if self.lap:
+            return numGates**3 / averageGateTime # averageGateTime is currently equal to zero
         else: return numGates
 
     def checkStopConditions(self):
         if len(self.gatesVisited) == 0 and self.timeAlive > 5:
             # print("Car has not moved sufficient distance")
             self.kill()
-        if len(self.gatesVisited) == 1 and any([GATE_TRACKER.sameGateAs(x, y, BACKWARD_GATE_X, BACKWARD_GATE_Y) for (x, y) in self.gatesVisited.keys()]):
+        if self.lap == 0 and len(self.gatesVisited) == 1 and any([GATE_TRACKER.sameGateAs(x, y, BACKWARD_GATE_X, BACKWARD_GATE_Y) for (x, y) in self.gatesVisited.keys()]):
             #print("Going backwards")
             self.kill()
             self.getFitness = lambda : 0
