@@ -30,7 +30,7 @@ class GatesTracker:
 
     def isGate(self, x,y):
         x, y = int(x), int(y)
-        return 0 < x < 1080 and 0 < y < 920 and self.gatesMatrix[x][y]
+        return bool(0 < x < 1080 and 0 < y < 920 and self.gatesMatrix[x][y])
     
     def count(self):
         return self.wqu.count

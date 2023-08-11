@@ -14,10 +14,10 @@ match TRACK_SELECTION:
         DEFAULT_START_Y = 415
     case 2:
         GATE_VARIABLE = 2
-        BACKWARD_GATE_X = 156
-        BACKWARD_GATE_Y = 246
-        DEFAULT_START_X = 123
-        DEFAULT_START_Y = 300
+        BACKWARD_GATE_X = 824
+        BACKWARD_GATE_Y = 436
+        DEFAULT_START_X = 804
+        DEFAULT_START_Y = 458
 
 ## TRACK IMAGE PROCESSING
 trackIm = Image.open(f"./images/track{TRACK_SELECTION}.png") 
@@ -270,8 +270,9 @@ class Car(PhysicalObject):
 
     # PIXEL DEBUGGING
     # def on_mouse_press(self, x, y, button, modifiers):
+    #     print(f"Coords: {(x,y)}")
     #     print(f"Is gate: {GATE_TRACKER.isGate(x, y)}")
-    #     print(f"Is start gate: {GATE_TRACKER.sameGateAs(x, y, BACKWARD_GATE_X, BACKWARD_GATE_Y)}")
+    #     print(f"Is start gate: {GATE_TRACKER.isSameGate(x, y, BACKWARD_GATE_X, BACKWARD_GATE_Y)}")
 
     def update(self, dt):
         if self.dead:
