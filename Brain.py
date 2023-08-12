@@ -25,32 +25,16 @@ class Brain:
 
 ##TESTING
 
-# layer1 = np.array([[3, 1, 4],
-#                    [1, 5, 9],
-#                    [2, 6, 2],
-#                    [3, 5, 8],
-#                    [9, 7, 2],
-#                    [3, 2, 3],
-#                    [8, 4, 6],
-#                    [2, 6, 4]])
+# Test_Layers = [np.loadtxt("InjectedBrain/Track2-F1554-G50/layer-0.csv"), np.loadtxt("InjectedBrain/Track2-F1554-G50/layer-1.csv"), np.loadtxt("InjectedBrain/Track2-F1554-G50/layer-2.csv")]
+# b = Brain(Test_Layers)
 
-
-# hiddenLayer = np.array([[1,2,3,4,5,6,7,8],
-#                        [9,0,9,8,7,6,5,4],
-#                        [3,2,1,2,3,4,5,6],
-#                        [1,2,3,4,5,6,7,8],
-#                        [9,0,9,8,7,6,5,4],
-#                        [3,2,1,2,3,4,5,6],
-#                        [1,2,3,4,5,6,7,8],
-#                        [3,2,1,2,3,4,5,6],])
-
-# outputLayer = np.array([[2,7,1,8,2,8,1,8],
-#                         [2,8,4,5,9,0,4,5],
-#                         [2,3,5,3,6,0,2,8],
-#                         [5,3,5,1,6,6,3,5]])
-
-# b = Brain(layer1, hiddenLayer, outputLayer)
-
-# input = np.array([1, 0, 0])
-
-# b.process(input)
+# for i in range(2):
+#     for j in range(2):
+#         print("===========")
+#         print("LeftEye: ", i)
+#         print("RightEye:", j)
+#         output = b.process(np.array([i,j]))
+#         print("Left ", output[0])
+#         print("Up   ", output[1])
+#         print("Right", output[2])
+#         print("Down ", output[3])

@@ -5,7 +5,6 @@ from Brain import Brain
 DEFAULT_SPEED = 80.0
 DEFAULT_TURN_RADIUS = 100.0
 DEFAULT_EYE_PARAMS = [(100,-45), (100, 45)]
-NUM_BRAINS_INJECTED = 2
 
 DEFAULT_CAR_PARAMS = np.array([DEFAULT_SPEED, DEFAULT_TURN_RADIUS])
 TOP_BRAIN_LAYERS = [np.loadtxt("InjectedBrain/layer-0.csv"), np.loadtxt("InjectedBrain/layer-1.csv"), np.loadtxt("InjectedBrain/layer-2.csv")]
@@ -24,7 +23,7 @@ TOP_BRAIN_LAYERS = [np.loadtxt("InjectedBrain/layer-0.csv"), np.loadtxt("Injecte
 # right = 0 or 1
 
 class Generation:
-    def __init__(self, CarConstructor, numCars, currTrack, carParams=DEFAULT_CAR_PARAMS, eyeParams=DEFAULT_EYE_PARAMS, showEyes=True):
+    def __init__(self, CarConstructor, numCars, currTrack, injectedBrains, carParams=DEFAULT_CAR_PARAMS, eyeParams=DEFAULT_EYE_PARAMS, showEyes=True):
         self.number = 1
         self.showEyes = showEyes
         self.numCars = numCars
@@ -35,7 +34,7 @@ class Generation:
         for i in range(numCars):
             speed = carParams[0]
             turnRadius = carParams[1]
-            if i < NUM_BRAINS_INJECTED:
+            if i < injectedBrains:
                 brain = Brain(TOP_BRAIN_LAYERS)
             else:
                 brain = Brain(self.initBrainMatrices(len(eyeParams)))   

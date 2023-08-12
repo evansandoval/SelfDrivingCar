@@ -4,6 +4,19 @@ from pyglet import shapes
 from pyglet.window import key
 from Generations import Generation
 
+# SIMULATION CONTROLS
+NUM_CARS = 100
+STARTING_TRACK = 1
+INCREMENT_TRACKS = True
+NUM_INJECTED_BRAINS = 2
+
+# GRAPHICS CONTROLS
+SHOW_EYES = False
+SHOW_GATES = False
+
+# STOP CONDITION CONTROLS
+TIMEOUT = 45
+ZERO_GATE_TIMEOUT = 8
 
 ## PYGLET WINDOW SETUP
 windowX, windowY = 1080, 920 # track images should be 1080x920
@@ -33,11 +46,13 @@ eyeBatch = pyglet.graphics.Batch()
 # TRACK OBJECT SETUP
 TRACK_OBJECTS = {}
 for trackNumber in range(1, 3):
-    TRACK_OBJECTS[trackNumber] = Tracks.createTrackObj(trackNumber)
+    TRACK_OBJECTS[trackNumber] = Tracks.createTrackObj(trackNumber, SHOW_GATES)
 
 # Select starting track
 currTrack = TRACK_OBJECTS[1]
 def incrementTrack(currGen):
+    if not INCREMENT_TRACKS:
+        return
     global currTrack
     currTrack = TRACK_OBJECTS[1 + currGen % 2]
 
@@ -226,7 +241,7 @@ class Car(PhysicalObject):
             return numGates**3 / averageGateTime # averageGateTime is currently equal to zero
 
     def checkStopConditions(self):
-        if len(self.savedGateTimes) == 0 and self.timeAlive > 5:
+        if len(self.savedGateTimes) == 0 and self.timeAlive > ZERO_GATE_TIMEOUT:
             # print("Car has not moved sufficient distance")
             self.kill()
         if len(self.savedGateTimes) == 1: 
@@ -235,18 +250,18 @@ class Car(PhysicalObject):
                 #print("Going backwards")
                 self.kill()
                 self.getFitness = lambda : 0
-        if self.timeAlive > 30:
+        if self.timeAlive > TIMEOUT:
             # print('timeout')
             self.kill()
 
     def moveCar(self, dt):
-        if self.control['left']:
+        if self.control['left'] and not self.control['right']:
             self.turn(dt, -1)
-        if self.control['right']:
+        if self.control['right'] and not self.control['left']:
             self.turn(dt, 1)
-        if self.control['up']:
+        if self.control['up'] and not self.control['down']:
             self.drive(dt, 1)
-        if self.control['down']:
+        if self.control['down'] and not self.control['up']:
             self.drive(dt, -1)
 
     def processBrain(self):
@@ -276,7 +291,7 @@ class Car(PhysicalObject):
         self.moveCar(dt)
         self.checkStopConditions()
 
-gen = Generation(Car, 100, currTrack, showEyes=True)
+gen = Generation(Car, NUM_CARS, currTrack, NUM_INJECTED_BRAINS, showEyes=SHOW_EYES)
 # Universal update function by pyglet
 def update(dt):
     for obj in gen.cars:

@@ -17,7 +17,7 @@ class TrackObject:
         self.trackImage = None
         return
 
-def createTrackObj(trackNumber):
+def createTrackObj(trackNumber, showGates):
     trackObj = TrackObject()
     trackObj.TRACK_NUMBER = trackNumber
     match trackNumber:
@@ -56,7 +56,10 @@ def createTrackObj(trackNumber):
                                           # 0 otherwise
     trackObj.GATE_TRACKER = Gates.GatesTracker(gatesMatrix)
 
-    trackFile = pyglet.resource.image(f"track{trackNumber}gates.png")
+    if showGates:
+        trackFile = pyglet.resource.image(f"track{trackNumber}gates.png")
+    else:
+        trackFile = pyglet.resource.image(f"track{trackNumber}.png")
     trackObj.trackImage = pyglet.sprite.Sprite(img=trackFile)
 
     return trackObj
