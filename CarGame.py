@@ -5,17 +5,20 @@ from pyglet.window import key
 from Generations import Generation
 
 # SIMULATION CONTROLS
-NUM_CARS = 100
-STARTING_TRACK = 1
-INCREMENT_TRACKS = True
-NUM_INJECTED_BRAINS = 2
+NUM_CARS = 20
+NUM_INJECTED_BRAINS = 20
+STARTING_TRACK = 3
+TESTED_TRACKS = [3]
+CYCLE_TRACKS = False
+DRIVE_MANUALLY = False
+PIXEL_DEBUGGING_MODE = False
 
 # GRAPHICS CONTROLS
 SHOW_EYES = False
-SHOW_GATES = False
+SHOW_GATES = True
 
 # STOP CONDITION CONTROLS
-TIMEOUT = 45
+TIMEOUT = 80
 ZERO_GATE_TIMEOUT = 8
 
 ## PYGLET WINDOW SETUP
@@ -45,13 +48,13 @@ eyeBatch = pyglet.graphics.Batch()
 
 # TRACK OBJECT SETUP
 TRACK_OBJECTS = {}
-for trackNumber in range(1, 3):
+for trackNumber in TESTED_TRACKS:
     TRACK_OBJECTS[trackNumber] = Tracks.createTrackObj(trackNumber, SHOW_GATES)
 
 # Select starting track
-currTrack = TRACK_OBJECTS[1]
+currTrack = TRACK_OBJECTS[STARTING_TRACK]
 def incrementTrack(currGen):
-    if not INCREMENT_TRACKS:
+    if not CYCLE_TRACKS:
         return
     global currTrack
     currTrack = TRACK_OBJECTS[1 + currGen % 2]
@@ -265,6 +268,8 @@ class Car(PhysicalObject):
             self.drive(dt, -1)
 
     def processBrain(self):
+        if DRIVE_MANUALLY:
+            return
         inputVector = self.readEyes()
         outputVector = self.brain.process(inputVector)
         self.control['left'] = outputVector[0]
@@ -273,10 +278,14 @@ class Car(PhysicalObject):
         self.control['down'] = outputVector[3]
 
     # PIXEL DEBUGGING
-    # def on_mouse_press(self, x, y, button, modifiers):
-    #     print(f"Coords: {(x,y)}")
-    #     print(f"Is gate: {currTrack.GATE_TRACKER.isGate(x, y)}")
-    #     print(f"Is start gate: {currTrack.GATE_TRACKER.isSameGate(x, y, currTrack.BACKWARD_GATE_X, currTrack.BACKWARD_GATE_Y)}")
+    def on_mouse_press(self, x, y, button, modifiers):
+        if not PIXEL_DEBUGGING_MODE:
+            return
+        print("===============")
+        print(f"Coords: {(x,y)}")
+        print(f"Out of Bounds: {bool(currTrack.BOUNDS[x][y])}")
+        print(f"Is gate: {currTrack.GATE_TRACKER.isGate(x, y)}")
+        print(f"Is start gate: {currTrack.GATE_TRACKER.isSameGate(x, y, currTrack.BACKWARD_GATE_X, currTrack.BACKWARD_GATE_Y)}")
 
     def update(self, dt):
         if self.dead:

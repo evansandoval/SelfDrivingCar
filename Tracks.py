@@ -33,6 +33,12 @@ def createTrackObj(trackNumber, showGates):
             trackObj.BACKWARD_GATE_Y = 436
             trackObj.DEFAULT_START_X = 804
             trackObj.DEFAULT_START_Y = 458
+        case 3:
+            trackObj.GATE_VARIABLE = 2
+            trackObj.BACKWARD_GATE_X = 946
+            trackObj.BACKWARD_GATE_Y = 223
+            trackObj.DEFAULT_START_X = 947
+            trackObj.DEFAULT_START_Y = 316
 
     ## CREATE BOUNDS MATRIX
     trackIm = Image.open(f"./images/track{trackNumber}.png") 
