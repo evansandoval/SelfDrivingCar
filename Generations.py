@@ -2,10 +2,10 @@ import numpy as np
 import os
 from Brain import Brain
 
-DEFAULT_SPEED = 60.0
+DEFAULT_SPEED = 80.0
 DEFAULT_TURN_RADIUS = 100.0
-# DEFAULT_EYES = 3 # maybe even make this an input
 DEFAULT_EYE_PARAMS = [(100,-45), (100, 45)]
+NUM_BRAINS_INJECTED = 2
 
 DEFAULT_CAR_PARAMS = np.array([DEFAULT_SPEED, DEFAULT_TURN_RADIUS])
 TOP_BRAIN_LAYERS = [np.loadtxt("InjectedBrain/layer-0.csv"), np.loadtxt("InjectedBrain/layer-1.csv"), np.loadtxt("InjectedBrain/layer-2.csv")]
@@ -24,18 +24,18 @@ TOP_BRAIN_LAYERS = [np.loadtxt("InjectedBrain/layer-0.csv"), np.loadtxt("Injecte
 # right = 0 or 1
 
 class Generation:
-    def __init__(self, CarConstructor, numCars, startX, startY, carParams=DEFAULT_CAR_PARAMS, eyeParams=DEFAULT_EYE_PARAMS, showEyes=True):
+    def __init__(self, CarConstructor, numCars, currTrack, carParams=DEFAULT_CAR_PARAMS, eyeParams=DEFAULT_EYE_PARAMS, showEyes=True):
         self.number = 1
-        self.startX, self.startY = startX, startY
         self.showEyes = showEyes
         self.numCars = numCars
         self.Car = CarConstructor
         self.cars = []
         self.maxFitness = 832
+        startX, startY = currTrack.DEFAULT_START_X, currTrack.DEFAULT_START_Y
         for i in range(numCars):
             speed = carParams[0]
             turnRadius = carParams[1]
-            if i < 20: #inject 20 ideal cars
+            if i < NUM_BRAINS_INJECTED:
                 brain = Brain(TOP_BRAIN_LAYERS)
             else:
                 brain = Brain(self.initBrainMatrices(len(eyeParams)))   
@@ -66,7 +66,7 @@ class Generation:
         outputMatrix = np.random.uniform(-1, 1, (4, 8))
         return [inputMatrix, hiddenMatrix, outputMatrix]
     
-    def createNextGeneration(self):
+    def createNextGeneration(self, currTrack):
         self.sortByFitness()
         print(f"Generation {self.number}'s top 10 fitness scores:")
         for i in range(10):
@@ -77,7 +77,9 @@ class Generation:
         newEyes   = self.newEyes  ([car.eyeParams    for car in top20])
         # eyes need their own mix function to randomly mutate new eyes
         newBrains = self.newBrain(top20)
-        self.populateGeneration(DEFAULT_CAR_PARAMS, DEFAULT_EYE_PARAMS, self.startX, self.startY, newBrains)
+
+        startX, startY = currTrack.DEFAULT_START_X, currTrack.DEFAULT_START_Y
+        self.populateGeneration(DEFAULT_CAR_PARAMS, DEFAULT_EYE_PARAMS, startX, startY, newBrains)
         
     def saveBrain(self, car):
         if not os.path.exists(f"Saved-Brains/F{car.getFitness() // 1}-G{self.number}/"):

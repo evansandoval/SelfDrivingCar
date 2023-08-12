@@ -51,23 +51,32 @@ class Car(PhysicalObject):
             self.rotation = car.rotation + angle
             self.x = car.x
             self.y = car.y
-            self.line = shapes.Line(self.x, self.y, self.targetXY()[0], self.targetXY()[1], width=2, batch=eyeBatch)
+            self.line = shapes.Line(self.x, self.y, self.targetXY()[0][0], self.targetXY()[0][1], width=2, batch=eyeBatch)
         
         def read(self):
-            x, y = self.targetXY()
-            if 0 < x < 1080 and 0 < y < 920 and currTrack.BOUNDS[x][y]:
-                return 1
+            for x, y in self.targetXY():
+                if (0 <= x < 1080 and 0 <= y < 920 and currTrack.BOUNDS[x][y]):
+                    return 1
             return 0
 
         def updateLine(self):
             self.line.x = self.x
             self.line.y = self.y
-            self.line.x2 = self.targetXY()[0]
-            self.line.y2 = self.targetXY()[1]
+            self.line.x2 = self.targetXY()[0][0]
+            self.line.y2 = self.targetXY()[0][1]
 
         def targetXY(self):
             angle_radians = math.radians(self.rotation + 90)
-            return round(self.x + self.length * math.sin(angle_radians)), round(self.y + self.length * math.cos(angle_radians))
+            testPoints = []
+            # test end of eye
+            x = round(self.x + self.length * math.sin(angle_radians))
+            y = round(self.y + self.length * math.cos(angle_radians))
+            testPoints.append((x,y))
+            # test midway through eye (to avoid seeing through walls)
+            x = round(self.x + self.length / 2 * math.sin(angle_radians))
+            y = round(self.y + self.length / 2 * math.cos(angle_radians))
+            testPoints.append((x,y))
+            return testPoints
         
     def __init__(self, setSpeed, setRotateSpeed, eyeParams, brain, *args, **kwargs):
         super().__init__(img=carFile, *args, **kwargs)
@@ -75,7 +84,7 @@ class Car(PhysicalObject):
         self.rotate_speed = setRotateSpeed
         self.dead = False
         self.timeAlive = 0
-        self.FRICTION_CONSTANT = .99 
+        self.FRICTION_CONSTANT = .015
         self.rotation = -90 
         self.startX, self.startY = currTrack.DEFAULT_START_X, currTrack.DEFAULT_START_Y
         self.makeEyes(eyeParams)
@@ -117,8 +126,13 @@ class Car(PhysicalObject):
         return np.linalg.norm(np.array([self.velocity_x, self.velocity_y])) 
 
     def friction(self):
-        self.velocity_x *= self.FRICTION_CONSTANT
-        self.velocity_y *= self.FRICTION_CONSTANT
+        xLosses = self.velocity_x * self.FRICTION_CONSTANT
+        yLosses = self.velocity_y * self.FRICTION_CONSTANT
+        if self.control['up']:
+            xLosses *= .75
+            yLosses *= .75
+        self.velocity_x -= xLosses
+        self.velocity_y -= yLosses
         if all([not v for v in self.control.values()]) and self.magnitudeVelocity() < 45:
             self.velocity_x = 0
             self.velocity_y = 0
@@ -221,7 +235,7 @@ class Car(PhysicalObject):
                 #print("Going backwards")
                 self.kill()
                 self.getFitness = lambda : 0
-        if self.timeAlive > 45:
+        if self.timeAlive > 30:
             # print('timeout')
             self.kill()
 
@@ -254,15 +268,15 @@ class Car(PhysicalObject):
             return
         super(Car, self).update(dt)
         self.timeAlive += dt
-        self.friction()
         self.checkBounds()
         self.moveEyes()
         self.checkGates()
         self.processBrain()
+        self.friction()
         self.moveCar(dt)
         self.checkStopConditions()
 
-gen = Generation(Car, 100, currTrack.DEFAULT_START_X, currTrack.DEFAULT_START_Y, showEyes=False)
+gen = Generation(Car, 100, currTrack, showEyes=True)
 # Universal update function by pyglet
 def update(dt):
     for obj in gen.cars:
@@ -286,7 +300,7 @@ def on_draw():
         incrementTrack(gen.number)
 
         # MODIFY CREATE NEXT GENERATION TO CHANGE THE STARTX AND STARTY VALUES
-        gen.createNextGeneration()
+        gen.createNextGeneration(currTrack)
 
 if __name__ == '__main__':
     pyglet.clock.schedule_interval(update, 1/120.0)
