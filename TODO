@@ -1,4 +1,2 @@
 - Reproduce cars with their RELATIVE fitness (more fit cars reproduce more)
-- Implement evolution of eye and car parameters
-- Make other tracks to test generalization
-- Fix fitness function to prevent cars from speeding into walls for fitness
+- Implement evolution of eye parameters

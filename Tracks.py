@@ -1,22 +1,22 @@
+# Handles track cycling and creating TrackObjects
+
 import Gates, pyglet, numpy as np
 from PIL import Image
 
-# Struct for TrackObj
+# Track Class
 class TrackObject:
     def __init__(self):
         self.TRACK_NUMBER = None
-
         self.GATE_VARIABLE = None
         self.BACKWARD_GATE_X = None
         self.BACKWARD_GATE_Y = None
         self.DEFAULT_START_X = None
         self.DEFAULT_START_Y = None
-
         self.BOUNDS = None
         self.GATE_TRACKER = None
         self.trackImage = None
-        return
 
+# Create track objects based on track number
 def createTrackObj(trackNumber, showGates):
     trackObj = TrackObject()
     trackObj.TRACK_NUMBER = trackNumber

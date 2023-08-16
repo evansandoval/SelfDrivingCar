@@ -2,6 +2,9 @@
 # WeightedQuickUnionWithPathCompressionUF java class from their algorithms 4 course
 # link: https://gist.github.com/leonid-ed/d199421416f91aa8486ba56d1e1bfe78
 
+# Utility of this data structure is for efficiently identifying when gate pixels
+# are adjacent (and thus part of the same gate)
+
 class WeightedQuickUnionWithPathCompressionUF():
   """Weighted quick-union with path compression algorithm
   The original Java implementation is introduced at:
