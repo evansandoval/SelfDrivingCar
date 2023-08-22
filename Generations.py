@@ -54,26 +54,26 @@ class Generation:
         newBrains = self.generateNewBrains(top20)
         self.populateGeneration(newParams, newEyes, newBrains, currTrack)
 
-
     # Initializes Brains (Neural Networks) with weights randomly distributed between 1 and -1
     def initBrains(self, numInputs, numInjectedBrains, numHiddenLayers):
         listOfBrainLayers = []
         for i in range(self.numCars):
             if i < numInjectedBrains:
                 brainLayers = INJECTED_BRAIN_LAYERS
+                continue
+
+            if numHiddenLayers == 0:
+                matrix = np.random.uniform(-1, 1, (NUM_OUTPUTS, numInputs))
+                brainLayers = [matrix]
             else:
-                if numHiddenLayers == 0:
-                    matrix = np.random.uniform(-1, 1, (NUM_OUTPUTS, numInputs))
-                    brainLayers = [matrix]
-                else:
-                    inputMatrix  = np.random.uniform(-1, 1, (LEN_HIDDEN_LAYERS, numInputs))
-                    brainLayers = [inputMatrix]
-                    # init all hidden layer matrices (there is always 1 less matrix than layers)
-                    for _ in range(numHiddenLayers - 1):
-                        hiddenMatrix = np.random.uniform(-1, 1, (LEN_HIDDEN_LAYERS, LEN_HIDDEN_LAYERS))
-                        brainLayers.append(hiddenMatrix)
-                    outputMatrix = np.random.uniform(-1, 1, (NUM_OUTPUTS, LEN_HIDDEN_LAYERS))
-                    brainLayers.append(outputMatrix)
+                inputMatrix  = np.random.uniform(-1, 1, (LEN_HIDDEN_LAYERS, numInputs))
+                brainLayers = [inputMatrix]
+                # init all hidden layer matrices (there is always 1 less matrix than layers)
+                for _ in range(numHiddenLayers - 1):
+                    hiddenMatrix = np.random.uniform(-1, 1, (LEN_HIDDEN_LAYERS, LEN_HIDDEN_LAYERS))
+                    brainLayers.append(hiddenMatrix)
+                outputMatrix = np.random.uniform(-1, 1, (NUM_OUTPUTS, LEN_HIDDEN_LAYERS))
+                brainLayers.append(outputMatrix)
             listOfBrainLayers.append(brainLayers)
         return listOfBrainLayers
     
@@ -105,7 +105,6 @@ class Generation:
     def generateChildren(self, lst):
         for i in range(len(lst)):
             child = self.crossOver(lst[i], lst[i+1]) # replace this with a genetic crossover function instead
-            
             for _ in range(4): # need four more children
                 shape = np.shape(child)
                 mutatedChild = child + np.random.normal(0, MUTATION_STD_DEV, size=shape)
