@@ -7,7 +7,11 @@ from Brain import Brain
 # Genetic Algorithm Controls
 CROSSOVER_RATE = .2 # Percent chance of genetic crossover
 MUTATION_STD_DEV = .12 # Std Dev of random number added during genetic mutation
-NUM_HIDDEN_LAYERS = 8
+
+# Neural Network Controls
+NUM_HIDDEN_LAYERS = 2 # Number of hidden layers in the neural network
+LEN_HIDDEN_LAYERS = 8 # Number of neurons in each of the hidden layers
+NUM_OUTPUTS = 4 # This should always be 4 (car only has 4 controls)
 
 # Default Parameters
 # Note: These are currently constant but can also be used as parameters for optimization
@@ -24,7 +28,7 @@ class Generation:
         self.numCars = numCars
         self.Car = CarConstructor
         self.cars = []
-        brainParams = self.initBrains(len(eyeParams), numInjectedBrains)
+        brainParams = self.initBrains(len(eyeParams), numInjectedBrains, NUM_HIDDEN_LAYERS)
         self.populateGeneration(carParams, eyeParams, brainParams, currTrack)
 
     # Constructs and stores car objects for each generation
@@ -49,19 +53,26 @@ class Generation:
         newBrains = self.generateNewBrains(top20)
         self.populateGeneration(newParams, newEyes, newBrains, currTrack)
 
-    # Brain needs at least three matrices in order to compute
-    # NUM_HIDDEN_LAYERS x numEyes || NUM_HIDDEN_LAYERS x NUM_HIDDEN_LAYERS || 4 x NUM_HIDDEN_LAYERS
-    def initBrains(self, numInputs, numInjectedBrains):
+
+    # Initializes Brains (Neural Networks) with weights randomly distributed between 1 and -1
+    def initBrains(self, numInputs, numInjectedBrains, numHiddenLayers):
         listOfBrainLayers = []
         for i in range(self.numCars):
             if i < numInjectedBrains:
                 brainLayers = INJECTED_BRAIN_LAYERS
             else:
-                # initialize random matrices using a UNIFORM distribution
-                inputMatrix = np.random.uniform(-1, 1, (NUM_HIDDEN_LAYERS, numInputs))
-                hiddenMatrix = np.random.uniform(-1, 1, (NUM_HIDDEN_LAYERS, NUM_HIDDEN_LAYERS))
-                outputMatrix = np.random.uniform(-1, 1, (4, NUM_HIDDEN_LAYERS))
-                brainLayers = [inputMatrix, hiddenMatrix, outputMatrix]
+                if numHiddenLayers == 0:
+                    matrix = np.random.uniform(-1, 1, (NUM_OUTPUTS, numInputs))
+                    brainLayers = [matrix]
+                else:
+                    inputMatrix  = np.random.uniform(-1, 1, (LEN_HIDDEN_LAYERS, numInputs))
+                    brainLayers = [inputMatrix]
+                    # init all hidden layer matrices (there is always 1 less matrix than layers)
+                    for _ in range(numHiddenLayers - 1):
+                        hiddenMatrix = np.random.uniform(-1, 1, (LEN_HIDDEN_LAYERS, LEN_HIDDEN_LAYERS))
+                        brainLayers.append(hiddenMatrix)
+                    outputMatrix = np.random.uniform(-1, 1, (NUM_OUTPUTS, LEN_HIDDEN_LAYERS))
+                    brainLayers.append(outputMatrix)
             listOfBrainLayers.append(brainLayers)
         return listOfBrainLayers
     
