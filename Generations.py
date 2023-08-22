@@ -9,6 +9,7 @@ CROSSOVER_RATE = .2 # Percent chance of genetic crossover
 MUTATION_STD_DEV = .12 # Std Dev of random number added during genetic mutation
 
 # Neural Network Controls
+# Note: These are currently constant but can also be used as parameters for optimization
 NUM_HIDDEN_LAYERS = 2 # Number of hidden layers in the neural network
 LEN_HIDDEN_LAYERS = 8 # Number of neurons in each of the hidden layers
 NUM_OUTPUTS = 4 # This should always be 4 (car only has 4 controls)
