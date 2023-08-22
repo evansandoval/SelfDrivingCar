@@ -1,5 +1,5 @@
 # Self Driving Car ([Demo Link](https://clipchamp.com/watch/GywOsHEL7n1))
-Train a 2D Car to navigate a track using **Evolutionary Neural Networks**. Built with NumPy for computation and pyglet for the simulation.
+Train a 2D Car to optimally navigate a track using **Evolutionary Neural Networks**. Built with NumPy for computation and pyglet for the simulation.
 
 ![DemoGif](https://github.com/evansandoval/SelfDrivingCar/blob/TwoPhaseTraining/images/SelfDrivingCar.gif?raw=true)
 
